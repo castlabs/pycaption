@@ -81,7 +81,7 @@ http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML
 import math
 import re
 import textwrap
-from collections import deque
+from collections import deque, OrderedDict
 from copy import deepcopy
 
 from pycaption.base import (
