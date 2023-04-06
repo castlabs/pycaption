@@ -237,6 +237,11 @@ class SCCReader(BaseReader):
         :type offset: int
         :param offset:
 
+        :type merge_captions: bool
+        :param merge_captions: If True, we will merge captions that have the same
+            start and end time. We do this by merging their nodes together, separating
+            them with a line break.
+
         :rtype: CaptionSet
         """
         if not isinstance(content, str):
