@@ -8,11 +8,7 @@ class PLSTTReader(BaseReader):
     RE_HEADER = re.compile(r"\[header](.*?)\[/header]", re.DOTALL | re.IGNORECASE)
     RE_BODY = re.compile(r"\[body](.*?)\[/body]", re.DOTALL | re.IGNORECASE)
 
-    RE_BODY_LOOP = re.compile(
-        r"\[(?P<sub_num>\d+)]\n(?P<sub_start>\d\d:\d\d:\d\d:\d\d)\n(?P<sub_end>\d\d:\d\d:\d\d:\d\d)(?P<sub_text>.+?)(?=\[\d+])",
-        re.DOTALL,
-    )
-
+    RE_SUBS_SPLIT = r"^\[\d+]$\n"
     RE_HTML = re.compile(r"\[[^>]+]")
 
     def _get_header(self, content) -> dict:
@@ -33,12 +29,14 @@ class PLSTTReader(BaseReader):
             return ""
         return body_match.group(1).strip()
 
-    def _parse_sub_match(self, match):
-        sub_num = int(match.group("sub_num").strip())
-        sub_start = match.group("sub_start").strip()
-        sub_end = match.group("sub_end").strip()
-        sub_text = match.group("sub_text").strip()
-        return sub_num, sub_start, sub_end, sub_text
+    def _parse_sub(self, sub):
+        sub_split = sub.split("\n")
+
+        sub_start = sub_split[0].strip()
+        sub_end = sub_split[1].strip()
+        sub_text = [l.strip() for l in sub_split[2:]]
+
+        return sub_start, sub_end, sub_text
 
     def detect(self, content):
         if self._get_header(content) and self._get_body(content):
@@ -50,21 +48,22 @@ class PLSTTReader(BaseReader):
         if type(content) != str:
             raise InvalidInputError("The content is not a unicode string.")
 
-        header = self._get_header(content)
-
         try:
+            header = self._get_header(content)
             framerate = float(header.get("TIME_FRAME_RATE"))
         except:
-            raise InvalidInputError("TIME_FRAME_RATE not set or has invalid value in the header of the subtitles.")
+            raise InvalidInputError("Invalid or missing header or cannot get or parse TIME_FRAME_RATE.")
 
         body = self._get_body(content)
 
         captions = CaptionList()
-        for match in self.RE_BODY_LOOP.finditer(body):
-            sub_num, sub_start, sub_end, sub_text = self._parse_sub_match(match)
+        all_splits = re.split(PLSTTReader.RE_SUBS_SPLIT, body, flags=re.MULTILINE)
+        nonempty_splits = [split.strip() for split in all_splits if split and split.strip()]
+
+        for sub in nonempty_splits:
+            sub_start, sub_end, sub_text = self._parse_sub(sub)
             start = self._srttomicro(sub_start, framerate)
             end = self._srttomicro(sub_end, framerate)
-            sub_text = sub_text.splitlines()
 
             nodes = []
             for line in sub_text:
