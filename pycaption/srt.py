@@ -1,12 +1,10 @@
-import os
+import re
 from copy import deepcopy
 
 from .base import (
-    BaseReader, BaseWriter, CaptionSet, CaptionList, Caption, CaptionNode)
+    BaseReader, BaseWriter, CaptionSet, CaptionList, Caption, CaptionNode,
+)
 from .exceptions import CaptionReadNoCaptions, InvalidInputError
-
-import re
-from PIL import Image, ImageFont, ImageDraw
 
 
 class SRTReader(BaseReader):
@@ -21,7 +19,7 @@ class SRTReader(BaseReader):
             return False
 
     def read(self, content, lang='en-US', strip_html=False, strip_ass_tags=False):
-        if type(content) != str:
+        if not isinstance(content, str):
             raise InvalidInputError('The content is not a unicode string.')
 
         lines = content.splitlines()
@@ -49,7 +47,6 @@ class SRTReader(BaseReader):
 
                     if strip_ass_tags:
                         txt = SRTReader.RE_ASS.sub('', txt)
-
                     nodes.append(CaptionNode.create_text(txt))
                     nodes.append(CaptionNode.create_break())
 
@@ -70,23 +67,13 @@ class SRTReader(BaseReader):
 
     def _srttomicro(self, stamp):
         timesplit = stamp.split(':')
-
-        # TODO(apeterka): add better support for "extended SRT"
-        # This is a workaround for "extended SRT" format, whose timestamp looks like this:
-        # 00:00:18,208 --> 00:00:20,792 X1:230 X2:490 Y1:393 Y2:431
-        if len(timesplit) > 3:
-            timesplit = timesplit[0:3]
-        if ' ' in timesplit[2]:
-            timesplit[2] = timesplit[2].split(' ')[0]
-
         if ',' not in timesplit[2]:
             timesplit[2] += ',000'
         secsplit = timesplit[2].split(',')
-
-        microseconds = (int(timesplit[0]) * 3600000000 +
-                        int(timesplit[1]) * 60000000 +
-                        int(secsplit[0]) * 1000000 +
-                        int(secsplit[1]) * 1000)
+        microseconds = (int(timesplit[0]) * 3600000000
+                        + int(timesplit[1]) * 60000000
+                        + int(secsplit[0]) * 1000000
+                        + int(secsplit[1]) * 1000)
 
         return microseconds
 
@@ -106,80 +93,67 @@ class SRTReader(BaseReader):
 
 
 class SRTWriter(BaseWriter):
-    VALID_POSITION = ['top', 'bottom']
-
-    def write(self, caption_set, position='bottom'):
-        position = position.lower().strip()
-        if position not in SRTWriter.VALID_POSITION:
-            raise ValueError('Unknown position. Supported: {}'.format(','.join(SRTWriter.VALID_POSITION)))
-
-        if position == 'top' and not all([self.video_width, self.video_height]):
-            raise ValueError('Top position requires video width and height.')
-
+    def write(self, caption_set):
         caption_set = deepcopy(caption_set)
 
         srt_captions = []
 
         for lang in caption_set.get_languages():
             srt_captions.append(
-                self._recreate_lang(caption_set.get_captions(lang), position)
+                self._recreate_lang(caption_set.get_captions(lang))
             )
 
         caption_content = 'MULTI-LANGUAGE SRT\n'.join(srt_captions)
         return caption_content
 
-    def _recreate_lang(self, captions, position='bottom'):
+    def _recreate_lang(self, captions):
+        # Merge caption's that are on the exact same timestamp otherwise some
+        # players will play them in reversed order, libass specifically which is
+        # used quite a lot, including VLC and MPV.
+
+        merged_captions = [captions[0]] if captions else []
+
+        for caption in captions[1:]:
+            # Merge if the timestamp is the same as last caption
+            if (caption.start, caption.end) == (
+                    merged_captions[-1].start, merged_captions[-1].end):
+                merged_captions[-1] = Caption(
+                    start=caption.start,
+                    end=caption.end,
+                    nodes=(merged_captions[-1].nodes
+                           + [CaptionNode.create_break()]
+                           + caption.nodes))
+            else:
+                # Different timestamp, end of merging, append new caption
+                merged_captions.append(caption)
+        captions = merged_captions
+
         srt = ''
         count = 1
 
-        fnt = ImageFont.truetype(os.path.dirname(__file__) + '/NotoSansDisplay-Regular-Note-Math.ttf', 30)
-
-        img = None
-        draw = None
-        if position == 'top':
-            img = Image.new('RGB', (self.video_width, self.video_height), (0, 255, 0))
-            draw = ImageDraw.Draw(img)
-
         for caption in captions:
-            # Generate the text
+            srt += f'{count}\n'
+
+            start = caption.format_start(msec_separator=',')
+            end = caption.format_end(msec_separator=',')
+
+            srt += f'{start[:12]} --> {end[:12]}\n'
+
             new_content = ''
             for node in caption.nodes:
                 new_content = self._recreate_line(new_content, node)
 
             # Eliminate excessive line breaks
             new_content = new_content.strip()
-            while '\n\n' in new_content:
-                new_content = new_content.replace('\n\n', '\n')
 
-            srt += '%s\n' % count
-
-            start = caption.format_start(msec_separator=',')
-            end = caption.format_end(msec_separator=',')
-            if position == 'bottom':
-                # "bottom" is standard (no position info).
-                # Use the old behavior, output just the timestamp, no coordinates.
-                timestamp = '%s --> %s\n' % (start[:12], end[:12])
-            elif position == 'top':
-                padding_top = 10
-                l, t, r, b = draw.textbbox((0, 0), new_content, font=fnt)
-                l, t, r, b = draw.textbbox((self.video_width / 2 - r / 2, padding_top), new_content, font=fnt)
-                x1 = str(round(l)).zfill(3)
-                x2 = str(round(r)).zfill(3)
-                y1 = str(round(t)).zfill(3)
-                y2 = str(round(b)).zfill(3)
-                timestamp = '%s --> %s X1:%s X2:%s Y1:%s Y2:%s\n' % (start[:12], end[:12], x1, x2, y1, y2)
-            else:
-                raise ValueError('Unsupported position: %s' % position)
-
-            srt += timestamp.replace('.', ',')
-            srt += "%s%s" % (new_content, '\n\n')
+            srt += f"{new_content}\n\n"
             count += 1
 
         return srt[:-1]  # remove unwanted newline at end of file
 
     def _recreate_line(self, srt, line):
         if line.type_ == CaptionNode.TEXT:
-            return srt + '%s ' % line.content
+            return srt + f'{line.content} '
         elif line.type_ == CaptionNode.BREAK:
             return srt + '\n'
         else:

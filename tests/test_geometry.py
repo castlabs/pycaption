@@ -1,38 +1,39 @@
-import unittest
+import pytest
 
+from pycaption import CaptionReadSyntaxError
 from pycaption.geometry import Size, Point, Stretch, Padding, UnitEnum, Layout
 
-class IsValidGeometryObjectTestCase(unittest.TestCase):
 
+class TestIsValidGeometryObject:
     def test_size_is_valid(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             Size()
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Size(None, None)
 
     def test_point_is_valid(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             Point()
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Point(None, None)
 
     def test_stretch_is_valid(self):
-        with self.assertRaises(TypeError):
+        with pytest.raises(TypeError):
             Stretch()
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             Stretch(None, None)
 
-class IsRelativeTestCase(unittest.TestCase):
 
+class TestIsRelative:
     def test_size_is_relative(self):
         size_px = Size(30, UnitEnum.PIXEL)
         size_percent = Size(30, UnitEnum.PERCENT)
 
-        self.assertFalse(size_px.is_relative())
-        self.assertTrue(size_percent.is_relative())
+        assert not size_px.is_relative()
+        assert size_percent.is_relative()
 
     def test_point_is_relative(self):
         size_px = Size(30, UnitEnum.PIXEL)
@@ -45,9 +46,9 @@ class IsRelativeTestCase(unittest.TestCase):
         point_mix = Point(size_percent, size_px)
         point_rel = Point(size_percent, size_percent2)
 
-        self.assertFalse(point_abs.is_relative())
-        self.assertFalse(point_mix.is_relative())
-        self.assertTrue(point_rel.is_relative())
+        assert not point_abs.is_relative()
+        assert not point_mix.is_relative()
+        assert point_rel.is_relative()
 
     def test_stretch_is_relative(self):
         size_px = Size(30, UnitEnum.PIXEL)
@@ -60,9 +61,9 @@ class IsRelativeTestCase(unittest.TestCase):
         stretch_mix = Stretch(size_percent, size_px)
         stretch_rel = Stretch(size_percent, size_percent2)
 
-        self.assertFalse(stretch_abs.is_relative())
-        self.assertFalse(stretch_mix.is_relative())
-        self.assertTrue(stretch_rel.is_relative())
+        assert not stretch_abs.is_relative()
+        assert not stretch_mix.is_relative()
+        assert stretch_rel.is_relative()
 
     def test_padding_is_relative(self):
         size_px = Size(30, UnitEnum.PIXEL)
@@ -80,14 +81,12 @@ class IsRelativeTestCase(unittest.TestCase):
         padding_rel = Padding(
             size_percent, size_percent2, size_percent3, size_percent4)
 
-        self.assertFalse(padding_abs.is_relative())
-        self.assertFalse(padding_mix.is_relative())
-        self.assertTrue(padding_rel.is_relative())
+        assert not padding_abs.is_relative()
+        assert not padding_mix.is_relative()
+        assert padding_rel.is_relative()
 
     def test_layout_is_relative(self):
         empty_layout = Layout()
-
-        self.assertTrue(empty_layout.is_relative())
 
         size_px = Size(30, UnitEnum.PIXEL)
         size_px2 = Size(30, UnitEnum.PIXEL)
@@ -119,6 +118,26 @@ class IsRelativeTestCase(unittest.TestCase):
             padding=None
         )
 
-        self.assertFalse(layout_abs.is_relative())
-        self.assertFalse(layout_mix.is_relative())
-        self.assertTrue(layout_rel.is_relative())
+        assert empty_layout.is_relative()
+        assert not layout_abs.is_relative()
+        assert not layout_mix.is_relative()
+        assert layout_rel.is_relative()
+
+
+class TestSize:
+    @pytest.mark.parametrize('string, value, unit', [
+        ('1px', 1.0, UnitEnum.PIXEL), ('2.3em', 2.3, UnitEnum.EM),
+        ('12.34%', 12.34, UnitEnum.PERCENT), ('1.234c', 1.234, UnitEnum.CELL),
+        ('10pt', 10.0, UnitEnum.PT), ('0', 0.0, UnitEnum.PIXEL)])
+    def test_valid_size_from_string(self, string, value, unit):
+        size = Size.from_string(string)
+
+        assert size.value == value
+        assert size.unit == unit
+
+    @pytest.mark.parametrize('string', ['10', '11,1px', '12xx', '%', 'o1pt'])
+    def test_invalid_size_from_string(self, string):
+        with pytest.raises(CaptionReadSyntaxError) as exc_info:
+            Size.from_string(string)
+
+        assert exc_info.value.args[0].startswith(f"Invalid size: {string}.")

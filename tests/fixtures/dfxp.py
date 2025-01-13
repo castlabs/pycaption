@@ -1,53 +1,59 @@
-# -*- coding: utf-8 -*-
+import pytest
 
-SAMPLE_DFXP = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
-   <style xml:id="p" tts:color="#ffeedd" tts:fontFamily="Arial"
-          tts:fontSize="10pt" tts:textAlign="center"/>
+   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
   </styling>
   <layout>
-  <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"></region>
+  <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
   </layout>
  </head>
  <body>
   <div xml:lang="en-US" region="bottom">
-   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="p">
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="default">
     ( clock ticking )
    </p>
-   <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="p">
+   <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="default">
     MAN:<br/>
     When we think<br/>
     \u266a ...say bow, wow, \u266a
    </p>
-   <p begin="00:00:17.000" end="00:00:18.752" region="bottom" style="p">
+   <p begin="00:00:17.000" end="00:00:18.752" region="bottom" style="default">
     <span tts:textalign="right">we have this vision of Einstein</span>
    </p>
-   <p begin="00:00:18.752" end="00:00:20.887" region="bottom" style="p">
+   <p begin="00:00:18.752" end="00:00:20.887" region="bottom" style="default">
    <br/>
     as an old, wrinkly man<br/>
     with white hair.
    </p>
-   <p begin="00:00:20.887" end="00:00:26.760" region="bottom" style="p">
+   <p begin="00:00:20.887" end="00:00:26.760" region="bottom" style="default">
     MAN 2:<br/>
     E equals m c-squared is<br/>
     not about an old Einstein.
    </p>
-   <p begin="00:00:26.760" end="00:00:32.200" region="bottom" style="p">
+   <p begin="00:00:26.760" end="00:00:32.200" region="bottom" style="default">
     MAN 2:<br/>
     It's all about an eternal Einstein.
    </p>
-   <p begin="00:00:32.200" end="00:00:36.200" region="bottom" style="p">
+   <p begin="00:00:32.200" end="00:00:36.200" region="bottom" style="default">
     &lt;LAUGHING &amp; WHOOPS!&gt;
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_WITH_INLINE_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_inline_style():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -74,7 +80,10 @@ SAMPLE_DFXP_WITH_INLINE_STYLE = """
 </tt>
 """
 
-SAMPLE_DFXP_WITH_DEFINED_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_defined_style():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -102,7 +111,10 @@ SAMPLE_DFXP_WITH_DEFINED_STYLE = """
 </tt>
 """
 
-SAMPLE_DFXP_WITH_INHERITED_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_inherited_style():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -135,7 +147,10 @@ SAMPLE_DFXP_WITH_INHERITED_STYLE = """
 </tt>
 """
 
-SAMPLE_DFXP_WITHOUT_REGION_AND_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_dfxp_without_region_and_style():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -175,8 +190,11 @@ SAMPLE_DFXP_WITHOUT_REGION_AND_STYLE = """
  </body>
 </tt>"""
 
-SAMPLE_DFXP_WITH_POSITIONING = """<?xml version="1.0" encoding="utf-8"?>
-<tt xml:lang="en-us"
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_positioning():
+    return """<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en-US"
     xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts='http://www.w3.org/ns/ttml#styling'
     >
@@ -185,7 +203,7 @@ SAMPLE_DFXP_WITH_POSITIONING = """<?xml version="1.0" encoding="utf-8"?>
         <style xml:id="padded" tts:backgroundColor="yellow" tts:padding="10%"/>
     </styling>
     <layout>
-        <region xml:id="regionOne" tts:textAlign='middle' tts:origin='96px 54px' tts:extent='70% 25%' style="padded"/>
+        <region xml:id="regionOne" tts:textAlign='center' tts:origin='96px 54px' tts:extent='70% 25%' style="padded"/>
         <region xml:id="regionTwo" tts:backgroundColor="blue" tts:textAlign='right' tts:origin='25% 25%' tts:extent='50% 10%'/>
         <region xml:id="regionThree" tts:backgroundColor="green" tts:textAlign='left' tts:origin='50% 50%' tts:extent='25% 25%'/>
         <region xml:id="regionFour" tts:backgroundColor="red" tts:textAlign='right' tts:origin='25% 75%' tts:extent='25% 25%'/>
@@ -210,16 +228,20 @@ SAMPLE_DFXP_WITH_POSITIONING = """<?xml version="1.0" encoding="utf-8"?>
 </body>
 </tt>"""
 
-SAMPLE_DFXP_WITH_RELATIVIZED_POSITIONING = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_relativized_positioning():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling/>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="after" tts:extent="70% 25%" tts:origin="15% 15%" tts:padding="10% 10% 10% 10%" xml:id="r0"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:extent="70% 25%" tts:origin="15% 15%" tts:padding="10% 10% 10% 10%" tts:textAlign="center" xml:id="r0"/>
    <region tts:displayAlign="after" tts:extent="50% 10%" tts:origin="25% 25%" tts:textAlign="right" xml:id="r1"/>
    <region tts:displayAlign="after" tts:extent="25% 25%" tts:origin="50% 50%" tts:textAlign="left" xml:id="r2"/>
-   <region tts:displayAlign="after" tts:extent="25% 25%" tts:origin="25% 75%" tts:textAlign="right" xml:id="r3"/>
+   <region tts:displayAlign="after" tts:extent="25% 20%" tts:origin="25% 75%" tts:textAlign="right" xml:id="r3"/>
   </layout>
  </head>
  <body>
@@ -239,9 +261,13 @@ SAMPLE_DFXP_WITH_RELATIVIZED_POSITIONING = """<?xml version="1.0" encoding="utf-
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_EMPTY = """
+
+@pytest.fixture(scope="session")
+def sample_dfxp_empty():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -261,7 +287,9 @@ SAMPLE_DFXP_EMPTY = """
 """
 
 
-SAMPLE_DFXP_SYNTAX_ERROR = """
+@pytest.fixture(scope="session")
+def sample_dfxp_syntax_error():
+    return """
 <?xml version="1.0" encoding="UTF-16"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml">
 <body>
@@ -273,7 +301,10 @@ SAMPLE_DFXP_SYNTAX_ERROR = """
 </tt>
 """
 
-DFXP_FROM_SAMI_WITH_POSITIONING = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_from_sami_with_positioning():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -319,16 +350,20 @@ DFXP_FROM_SAMI_WITH_POSITIONING = """\
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_LONG_CUE = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_long_cue():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
    <style tts:backgroundColor="black" tts:color="white" tts:fontFamily="monospace" tts:fontSize="8%" xml:id="basic"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:origin="25% 25%" tts:textAlign="center" xml:id="r0"/>
   </layout>
  </head>
@@ -348,19 +383,23 @@ SAMPLE_DFXP_LONG_CUE = """<?xml version="1.0" encoding="utf-8"?>
 </tt>
 """
 
-SAMPLE_DFXP_LONG_CUE_FIT_TO_SCREEN = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_long_cue_fit_to_screen():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
    <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="8%" xml:id="basic"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="after" tts:extent="75% 75%" tts:origin="25% 25%" tts:textAlign="center" xml:id="r0"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:extent="65% 70%" tts:origin="25% 25%" tts:textAlign="center" xml:id="r0"/>
   </layout>
  </head>
  <body>
-  <div region="bottom" xml:lang="en-US">
+  <div region="bottom" xml:lang="en">
    <p begin="00:00:01.000" end="00:00:02.000" region="bottom" style="basic">
     NARRATOR:
    </p>
@@ -372,9 +411,13 @@ SAMPLE_DFXP_LONG_CUE_FIT_TO_SCREEN = """<?xml version="1.0" encoding="utf-8"?>
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_FROM_SAMI_WITH_MARGINS = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_from_sami_with_margins():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
@@ -392,9 +435,13 @@ SAMPLE_DFXP_FROM_SAMI_WITH_MARGINS = """<?xml version="1.0" encoding="utf-8"?>
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_FROM_SAMI_WITH_LANG_MARGINS = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_from_sami_with_lang_margins():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
@@ -412,9 +459,13 @@ SAMPLE_DFXP_FROM_SAMI_WITH_LANG_MARGINS = """<?xml version="1.0" encoding="utf-8
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_FROM_SAMI_WITH_SPAN = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_from_sami_with_span():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
@@ -431,9 +482,13 @@ SAMPLE_DFXP_FROM_SAMI_WITH_SPAN = """<?xml version="1.0" encoding="utf-8"?>
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_FROM_SAMI_WITH_BAD_SPAN_ALIGN = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def sample_dfxp_from_sami_with_bad_span_align():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
@@ -451,9 +506,13 @@ SAMPLE_DFXP_FROM_SAMI_WITH_BAD_SPAN_ALIGN = """<?xml version="1.0" encoding="utf
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-DFXP_STYLE_REGION_ALIGN_CONFLICT = """<?xml version="1.0" encoding="utf-8"?>
+
+@pytest.fixture(scope="session")
+def dfxp_style_region_align_conflict():
+    return """<?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
@@ -477,7 +536,10 @@ DFXP_STYLE_REGION_ALIGN_CONFLICT = """<?xml version="1.0" encoding="utf-8"?>
 </tt>
 """
 
-SAMPLE_DFXP_INVALID_BUT_SUPPORTED_POSITIONING_INPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_invalid_but_supported_positioning_input():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -507,7 +569,10 @@ SAMPLE_DFXP_INVALID_BUT_SUPPORTED_POSITIONING_INPUT = """\
  </body>
 </tt>"""
 
-SAMPLE_DFXP_INVALID_BUT_SUPPORTED_POSITIONING_OUTPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_invalid_but_supported_positioning_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -515,35 +580,38 @@ SAMPLE_DFXP_INVALID_BUT_SUPPORTED_POSITIONING_OUTPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" tts:textAlign="center" xml:id="p"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="after" tts:extent="62.5% 5.33%" tts:origin="17.5% 10%" tts:textAlign="center" xml:id="r0"/>
-   <region tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="20% 15.67%" tts:textAlign="center" xml:id="r1"/>
-   <region tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="1px 2px" tts:textAlign="center" xml:id="r2"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:extent="62.5% 5.33%" tts:origin="17.5% 10%" tts:textAlign="start" xml:id="r0"/>
+   <region tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="20% 15.67%" tts:textAlign="start" xml:id="r1"/>
+   <region tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="1px 2px" tts:textAlign="start" xml:id="r2"/>
    <region tts:displayAlign="before" tts:extent="60% 22%" tts:textAlign="right" xml:id="r3"/>
-   <region tts:displayAlign="after" tts:origin="11% 11%" tts:textAlign="center" xml:id="r4"/>
+   <region tts:displayAlign="after" tts:origin="11% 11%" tts:textAlign="start" xml:id="r4"/>
    <region tts:displayAlign="after" tts:origin="11% 11%" tts:textAlign="right" xml:id="r5"/>
   </layout>
  </head>
  <body>
-  <div region="bottom" tts:displayAlign="after" tts:textAlign="center" xml:lang="en-US">
-   <p begin="00:00:02.777" end="00:00:05.700" region="r0" style="p" tts:displayAlign="after" tts:extent="62.5% 5.33%" tts:origin="17.5% 10%" tts:textAlign="center">
+  <div region="bottom" tts:displayAlign="after" tts:textAlign="start" xml:lang="en-US">
+   <p begin="00:00:02.777" end="00:00:05.700" region="r0" style="p" tts:displayAlign="after" tts:extent="62.5% 5.33%" tts:origin="17.5% 10%" tts:textAlign="start">
     Hello there!
    </p>
-   <p begin="00:00:05.700" end="00:00:06.210" region="r1" style="p" tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="20% 15.67%" tts:textAlign="center">
-    How are you?<span region="r2" tts:origin="1px 2px" tts:textAlign="center" tts:extent="30% 7.67%" tts:displayAlign="after">&gt;&gt;Fine, thx&lt;&lt;</span>
+   <p begin="00:00:05.700" end="00:00:06.210" region="r1" style="p" tts:displayAlign="after" tts:extent="30% 7.67%" tts:origin="20% 15.67%" tts:textAlign="start">
+    How are you?<span region="r2" tts:origin="1px 2px" tts:extent="30% 7.67%" tts:textAlign="start" tts:displayAlign="after">&gt;&gt;Fine, thx&lt;&lt;</span>
    </p>
    <p begin="00:00:07.900" end="00:00:08.900" region="r3" style="p" tts:displayAlign="before" tts:extent="60% 22%" tts:textAlign="right">
     Just fine?
    </p>
-   <p begin="00:00:09.900" end="00:00:10.800" region="r4" style="p" tts:displayAlign="after" tts:origin="11% 11%" tts:textAlign="center">
+   <p begin="00:00:09.900" end="00:00:10.800" region="r4" style="p" tts:displayAlign="after" tts:origin="11% 11%" tts:textAlign="start">
     <span tts:textAlign="right" region="r5" tts:origin="11% 11%" tts:textAlign="right" tts:displayAlign="after">&gt;&gt;&gt;Lol, yes!</span>
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
 
-SAMPLE_DFXP_MULTIPLE_REGIONS_INPUT = """
+@pytest.fixture(scope="session")
+def sample_dfxp_multiple_regions_input():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -589,7 +657,10 @@ SAMPLE_DFXP_MULTIPLE_REGIONS_INPUT = """
 </tt>
 """
 
-SAMPLE_DFXP_MULTIPLE_REGIONS_OUTPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_multiple_regions_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -597,12 +668,11 @@ SAMPLE_DFXP_MULTIPLE_REGIONS_OUTPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" tts:textAlign="center" xml:id="p"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:displayAlign="after" tts:extent="30px 40px" tts:origin="40px 50px" tts:textAlign="center" xml:id="r0"/>
-   <region tts:displayAlign="after" tts:extent="50% 50%" tts:origin="10% 30%" tts:textAlign="center" xml:id="r1"/>
-   <region tts:displayAlign="after" tts:padding="2c 2c 2c 2c" tts:textAlign="center" xml:id="r2"/>
-   <region tts:displayAlign="after" tts:extent="3em 4em" tts:padding="3px 4px 5px 4px" tts:textAlign="center" xml:id="r3"/>
-   <region tts:displayAlign="after" tts:textAlign="start" xml:id="r4"/>
+   <region tts:displayAlign="after" tts:extent="50% 50%" tts:origin="10% 30%" tts:textAlign="start" xml:id="r1"/>
+   <region tts:displayAlign="after" tts:padding="2c 2c 2c 2c" tts:textAlign="start" xml:id="r2"/>
+   <region tts:displayAlign="after" tts:extent="3em 4em" tts:padding="3px 4px 5px 4px" tts:textAlign="start" xml:id="r3"/>
   </layout>
  </head>
  <body>
@@ -619,14 +689,18 @@ SAMPLE_DFXP_MULTIPLE_REGIONS_OUTPUT = """\
    <p begin="00:00:10.707" end="00:00:11.210" region="r3" style="p">
     What do you have in mind?
    </p>
-   <p begin="00:00:12.900" end="00:00:13.900" region="r4" style="p" tts:textAlign="start">
+   <p begin="00:00:12.900" end="00:00:13.900" region="bottom" style="p" tts:textAlign="start">
     To write random words here!
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_TO_RENDER_WITH_ONLY_DEFAULT_POSITIONING_INPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_to_render_with_only_default_positioning_input():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -635,7 +709,7 @@ SAMPLE_DFXP_TO_RENDER_WITH_ONLY_DEFAULT_POSITIONING_INPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" tts:textAlign="left" xml:id="p2"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:displayAlign="after" tts:extent="30px 40px" tts:origin="40px 50px" tts:textAlign="center" xml:id="r0"/>
    <region tts:displayAlign="after" tts:extent="50% 50%" tts:origin="10% 30%" tts:textAlign="center" xml:id="r1"/>
    <region tts:displayAlign="after" tts:padding="2c 2c 2c 2c" tts:textAlign="center" xml:id="r2"/>
@@ -655,6 +729,7 @@ SAMPLE_DFXP_TO_RENDER_WITH_ONLY_DEFAULT_POSITIONING_INPUT = """\
  </body>
 </tt>"""
 
+
 ##
 # When converting from DFXP to DFXP, notice the extra region "r0" is added, to
 # support the spam that sets the "tts:textAlign" attribute.
@@ -662,8 +737,11 @@ SAMPLE_DFXP_TO_RENDER_WITH_ONLY_DEFAULT_POSITIONING_INPUT = """\
 # tags. It's a feature that should affect only only those players that don't
 # conform to the specs.
 
+
 # UNUSED SAMPLE
-SAMPLE_DFXP_TO_DFXP_OUTPUT = """\
+@pytest.fixture(scope="session")
+def sample_dfxp_to_dfxp_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -671,7 +749,7 @@ SAMPLE_DFXP_TO_DFXP_OUTPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" tts:textAlign="center" xml:id="p"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:displayAlign="after" tts:textAlign="right" xml:id="r0"/>
   </layout>
  </head>
@@ -712,53 +790,60 @@ SAMPLE_DFXP_TO_DFXP_OUTPUT = """\
  </body>
 </tt>"""
 
-SAMPLE_DFXP_OUTPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
   <styling>
-   <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" tts:textAlign="center" xml:id="p"/>
+   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:displayAlign="after" tts:textAlign="right" xml:id="r0"/>
   </layout>
  </head>
  <body>
   <div region="bottom" xml:lang="en-US">
-   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="p">
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="default">
     ( clock ticking )
    </p>
-   <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="p">
+   <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="default">
     MAN:<br/>
     When we think<br/>
-    \u266a ...say bow, wow, \u266a
+    ♪ ...say bow, wow, ♪
    </p>
-   <p begin="00:00:17.000" end="00:00:18.752" region="bottom" style="p">
+   <p begin="00:00:17.000" end="00:00:18.752" region="bottom" style="default">
     <span tts:textAlign="right" region="r0">we have this vision of Einstein</span>
    </p>
-   <p begin="00:00:18.752" end="00:00:20.887" region="bottom" style="p">
+   <p begin="00:00:18.752" end="00:00:20.887" region="bottom" style="default">
     <br/>
     as an old, wrinkly man<br/>
     with white hair.
    </p>
-   <p begin="00:00:20.887" end="00:00:26.760" region="bottom" style="p">
+   <p begin="00:00:20.887" end="00:00:26.760" region="bottom" style="default">
     MAN 2:<br/>
     E equals m c-squared is<br/>
     not about an old Einstein.
    </p>
-   <p begin="00:00:26.760" end="00:00:32.200" region="bottom" style="p">
+   <p begin="00:00:26.760" end="00:00:32.200" region="bottom" style="default">
     MAN 2:<br/>
     It's all about an eternal Einstein.
    </p>
-   <p begin="00:00:32.200" end="00:00:36.200" region="bottom" style="p">
+   <p begin="00:00:32.200" end="00:00:36.200" region="bottom" style="default">
     &lt;LAUGHING &amp; WHOOPS!&gt;
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_INPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_style_tag_with_no_xml_id_input():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -766,14 +851,14 @@ SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_INPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" xml:id="p"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
    <region tts:displayAlign="after" xml:id="r0">
     <style tts:textAlign="start"/>
    </region>
   </layout>
  </head>
  <body>
-  <div xml:lang="en-US">
+  <div xml:lang="en">
    <p begin="00:00:09.209" end="00:00:12.312" region="r0" style="p">
     ( clock ticking )
    </p>
@@ -787,7 +872,10 @@ SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_INPUT = """\
 </tt>
 """
 
-SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_OUTPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_style_tag_with_no_xml_id_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -795,13 +883,12 @@ SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_OUTPUT = """\
    <style tts:color="#ffeedd" tts:fontFamily="Arial" tts:fontSize="10pt" xml:id="p"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="after" tts:textAlign="start" xml:id="r0"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
   </layout>
  </head>
  <body>
-  <div region="bottom" xml:lang="en-US">
-   <p begin="00:00:09.209" end="00:00:12.312" region="r0" style="p">
+  <div region="bottom" xml:lang="en">
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="p">
     ( clock ticking )
    </p>
    <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="p">
@@ -811,79 +898,13 @@ SAMPLE_DFXP_STYLE_TAG_WITH_NO_XML_ID_OUTPUT = """\
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-SAMPLE_DFXP_FROM_SCC_OUTPUT = """<?xml version="1.0" encoding="utf-8"?>
-<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
- <head>
-  <styling>
-   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
-  </styling>
-  <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="before" tts:origin="0% 80%" tts:textAlign="left" xml:id="r0"/>
-   <region tts:displayAlign="before" tts:origin="37.5% 0%" tts:textAlign="left" xml:id="r1"/>
-   <region tts:displayAlign="before" tts:origin="75% 20%" tts:textAlign="left" xml:id="r2"/>
-   <region tts:displayAlign="before" tts:origin="12.5% 46.67%" tts:textAlign="left" xml:id="r3"/>
-   <region tts:displayAlign="before" tts:origin="12.5% 93.33%" tts:textAlign="left" xml:id="r4"/>
-   <region tts:displayAlign="before" tts:origin="37.5% 53.33%" tts:textAlign="left" xml:id="r5"/>
-   <region tts:displayAlign="before" tts:origin="75% 13.33%" tts:textAlign="left" xml:id="r6"/>
-   <region tts:displayAlign="before" tts:origin="12.5% 33.33%" tts:textAlign="left" xml:id="r7"/>
-   <region tts:displayAlign="before" tts:origin="12.5% 86.67%" tts:textAlign="left" xml:id="r8"/>
-   <region tts:displayAlign="before" tts:origin="75% 6.67%" tts:textAlign="left" xml:id="r9"/>
-   <region tts:displayAlign="before" tts:origin="37.5% 40%" tts:textAlign="left" xml:id="r10"/>
-   <region tts:displayAlign="before" tts:origin="12.5% 73.33%" tts:textAlign="left" xml:id="r11"/>
-  </layout>
- </head>
- <body>
-  <div region="bottom" xml:lang="en-US">
-   <p begin="00:00:01.167" end="00:00:03.103" region="r0" style="default">
-    abab
-   </p>
-   <p begin="00:00:01.167" end="00:00:03.103" region="r1" style="default">
-    cdcd
-   </p>
-   <p begin="00:00:01.167" end="00:00:03.103" region="r2" style="default">
-    efef
-   </p>
-   <p begin="00:00:03.169" end="00:00:09.743" region="r3" style="default">
-    ghgh<br/>
-    ijij<br/>
-    klkl
-   </p>
-   <p begin="00:00:09.743" end="00:00:11.745" region="r4" style="default">
-    mnmn
-   </p>
-   <p begin="00:00:09.743" end="00:00:11.745" region="r5" style="default">
-    opop
-   </p>
-   <p begin="00:00:09.743" end="00:00:11.745" region="r6" style="default">
-    qrqr
-   </p>
-   <p begin="00:00:11.745" end="00:00:20.100" region="r7" style="default">
-    stst<br/>
-    uvuv<br/>
-    wxwx
-   </p>
-   <p begin="00:00:20.100" end="00:00:22.100" region="r8" style="default">
-    yzyz
-   </p>
-   <p begin="00:00:20.100" end="00:00:22.100" region="r9" style="default">
-    0101
-   </p>
-   <p begin="00:00:20.100" end="00:00:22.100" region="r10" style="default">
-    2323
-   </p>
-   <p begin="00:00:22.100" end="00:00:36.202" region="r11" style="default">
-    4545<br/>
-    6767<br/>
-    8989
-   </p>
-  </div>
- </body>
-</tt>"""
 
-SAMPLE_DFXP_WITH_PROPERLY_CLOSING_SPANS_OUTPUT = """\
+@pytest.fixture(scope="session")
+def sample_dfxp_from_scc_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -891,49 +912,124 @@ SAMPLE_DFXP_WITH_PROPERLY_CLOSING_SPANS_OUTPUT = """\
    <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
   </styling>
   <layout>
-   <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"/>
-   <region tts:displayAlign="before" tts:extent="87.5% 13.33%" tts:origin="12.5% 86.67%" tts:textAlign="left" xml:id="r0"/>
-   <region tts:displayAlign="before" tts:extent="75% 13.33%" tts:origin="25% 86.67%" tts:textAlign="left" xml:id="r1"/>
-   <region tts:displayAlign="before" tts:extent="50% 13.33%" tts:origin="50% 86.67%" tts:textAlign="left" xml:id="r2"/>
-   <region tts:displayAlign="before" tts:extent="37.5% 13.33%" tts:origin="62.5% 86.67%" tts:textAlign="left" xml:id="r3"/>
-   <region tts:displayAlign="before" tts:extent="75% 6.67%" tts:origin="25% 93.33%" tts:textAlign="left" xml:id="r4"/>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="before" tts:origin="10% 77%" tts:textAlign="left" xml:id="r0"/>
+   <region tts:displayAlign="before" tts:origin="40% 5%" tts:textAlign="left" xml:id="r1"/>
+   <region tts:displayAlign="before" tts:origin="70% 23%" tts:textAlign="left" xml:id="r2"/>
+   <region tts:displayAlign="before" tts:origin="20% 47%" tts:textAlign="left" xml:id="r3"/>
+   <region tts:displayAlign="before" tts:origin="20% 89%" tts:textAlign="left" xml:id="r4"/>
+   <region tts:displayAlign="before" tts:origin="40% 53%" tts:textAlign="left" xml:id="r5"/>
+   <region tts:displayAlign="before" tts:origin="70% 17%" tts:textAlign="left" xml:id="r6"/>
+   <region tts:displayAlign="before" tts:origin="20% 35%" tts:textAlign="left" xml:id="r7"/>
+   <region tts:displayAlign="before" tts:origin="20% 83%" tts:textAlign="left" xml:id="r8"/>
+   <region tts:displayAlign="before" tts:origin="70% 11%" tts:textAlign="left" xml:id="r9"/>
+   <region tts:displayAlign="before" tts:origin="40% 41%" tts:textAlign="left" xml:id="r10"/>
+   <region tts:displayAlign="before" tts:origin="20% 71%" tts:textAlign="left" xml:id="r11"/>
   </layout>
  </head>
  <body>
   <div region="bottom" xml:lang="en-US">
-   <p begin="00:01:31.400" end="00:01:35.666" region="r0" style="default">
-    cccccc<br/>
-    c!c!
+   <p begin="00:00:01.134" end="00:00:03.136" region="r0" style="default">
+    abab
    </p>
-   <p begin="00:01:35.666" end="00:01:40.866" region="r1" style="default">
-    bbbb
+   <p begin="00:00:01.134" end="00:00:03.136" region="r1" style="default">
+    cdcd
    </p>
-   <p begin="00:01:35.666" end="00:01:40.866" region="r2" style="default">
-    <span tts:fontStyle="italic" region="r2">cccc<br/>
-    bbaa</span>
+   <p begin="00:00:01.134" end="00:00:03.136" region="r2" style="default">
+    efef
    </p>
-   <p begin="00:01:55.800" end="00:01:59.533" region="r0" style="default">
-    aa
+   <p begin="00:00:03.136" end="00:00:09.709" region="r3" style="default">
+    ghgh<br/>
+    ijij<br/>
+    klkl
    </p>
-   <p begin="00:01:55.800" end="00:01:59.533" region="r3" style="default">
-    <span tts:fontStyle="italic" region="r3">bb<br/>
-    cc</span>
+   <p begin="00:00:09.709" end="00:00:11.711" region="r4" style="default">
+    mnmn
    </p>
-   <p begin="00:01:59.533" end="00:01:59.533" region="r3" style="default">
-    abcd
+   <p begin="00:00:09.709" end="00:00:11.711" region="r5" style="default">
+    opop
    </p>
-   <p begin="00:01:59.533" end="00:01:59.533" region="r4" style="default">
-    abcd
+   <p begin="00:00:09.709" end="00:00:11.711" region="r6" style="default">
+    qrqr
    </p>
-   <p begin="00:01:59.533" end="00:01:59.700" region="r4" style="default">
-    dddd
+   <p begin="00:00:11.711" end="00:00:20.086" region="r7" style="default">
+    stst<br/>
+    uvuv<br/>
+    wxwx
+   </p>
+   <p begin="00:00:20.086" end="00:00:22.088" region="r8" style="default">
+    yzyz
+   </p>
+   <p begin="00:00:20.086" end="00:00:22.088" region="r9" style="default">
+    0101
+   </p>
+   <p begin="00:00:20.086" end="00:00:22.088" region="r10" style="default">
+    2323
+   </p>
+   <p begin="00:00:22.088" end="00:00:26.088" region="r11" style="default">
+    4545<br/>
+    6767<br/>
+    8989
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
 
-SAMPLE_DFXP_FOR_LEGACY_WRITER_INPUT = """
+@pytest.fixture(scope="session")
+def sample_dfxp_with_properly_closing_spans_output():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <styling>
+   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
+  </styling>
+  <layout>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="before" tts:extent="70% 12%" tts:origin="20% 83%" tts:textAlign="left" xml:id="r0"/>
+   <region tts:displayAlign="before" tts:extent="60% 12%" tts:origin="30% 83%" tts:textAlign="left" xml:id="r1"/>
+   <region tts:displayAlign="before" tts:extent="40% 12%" tts:origin="50% 83%" tts:textAlign="left" xml:id="r2"/>
+   <region tts:displayAlign="before" tts:extent="30% 12%" tts:origin="60% 83%" tts:textAlign="left" xml:id="r3"/>
+   <region tts:displayAlign="before" tts:extent="60% 6%" tts:origin="30% 89%" tts:textAlign="left" xml:id="r4"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:01:28.700" end="00:01:31.366" region="r0" style="default">
+    cccccc<br/>
+    c!c!
+   </p>
+   <p begin="00:01:32.033" end="00:01:35.633" region="r1" style="default">
+    bbbb
+   </p>
+   <p begin="00:01:32.033" end="00:01:35.633" region="r2" style="default">
+    <span tts:fontStyle="italic" region="r2">cccc</span><br/>
+    bbaa
+   </p>
+   <p begin="00:01:51.966" end="00:01:55.966" region="r0" style="default">
+    aa
+   </p>
+   <p begin="00:01:51.966" end="00:01:55.966" region="r3" style="default">
+    <span tts:fontStyle="italic" region="r3">bb</span><br/>
+    cc
+   </p>
+   <p begin="00:01:55.966" end="00:01:59.500" region="r3" style="default">
+    abcd
+   </p>
+   <p begin="00:01:55.966" end="00:01:59.500" region="r4" style="default">
+    abcd
+   </p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_for_legacy_writer_input():
+    return """
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts="http://www.w3.org/ns/ttml#styling">
@@ -947,7 +1043,7 @@ SAMPLE_DFXP_FOR_LEGACY_WRITER_INPUT = """
   </layout>
  </head>
  <body>
-  <div xml:lang="en-US">
+  <div xml:lang="en">
    <p begin="00:00:09.209" end="00:00:12.312" style="p">
     ( clock ticking )
    </p>
@@ -980,7 +1076,10 @@ SAMPLE_DFXP_FOR_LEGACY_WRITER_INPUT = """
  </body>
 </tt>"""
 
-SAMPLE_DFXP_FOR_LEGACY_WRITER_OUTPUT = """\
+
+@pytest.fixture(scope="session")
+def sample_dfxp_for_legacy_writer_output():
+    return """\
 <?xml version="1.0" encoding="utf-8"?>
 <tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
  <head>
@@ -992,7 +1091,7 @@ SAMPLE_DFXP_FOR_LEGACY_WRITER_OUTPUT = """\
   </layout>
  </head>
  <body>
-  <div xml:lang="en-US">
+  <div xml:lang="en">
    <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="p">
     ( clock ticking )
    </p>
@@ -1025,10 +1124,14 @@ SAMPLE_DFXP_FOR_LEGACY_WRITER_OUTPUT = """\
    </p>
   </div>
  </body>
-</tt>"""
+</tt>
+"""
 
-DFXP_WITH_CONCURRENT_CAPTIONS = """\
-<tt xml:lang="en-us"
+
+@pytest.fixture(scope="session")
+def dfxp_with_concurrent_captions():
+    return """\
+<tt xml:lang="en-US"
     xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts='http://www.w3.org/ns/ttml#styling'
     >
@@ -1059,9 +1162,12 @@ DFXP_WITH_CONCURRENT_CAPTIONS = """\
 </body>
 </tt>"""
 
+
 # 'style_name' is the template parameter to use in str.format
-DFXP_WITH_TEMPLATED_STYLE = """\
-<tt xml:lang="en-us"
+@pytest.fixture(scope="session")
+def sample_dfxp_with_templated_style():
+    return """\
+<tt xml:lang="en-US"
     xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts='http://www.w3.org/ns/ttml#styling'
     >
@@ -1083,8 +1189,11 @@ DFXP_WITH_TEMPLATED_STYLE = """\
 </tt>
 """
 
-DFXP_WITH_ESCAPED_APOSTROPHE = """\
-<tt xml:lang="en-us"
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_escaped_apostrophe():
+    return """\
+<tt xml:lang="en-US"
     xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts='http://www.w3.org/ns/ttml#styling'
     >
@@ -1102,8 +1211,11 @@ DFXP_WITH_ESCAPED_APOSTROPHE = """\
 </body>
 </tt>"""
 
-DFXP_WITH_ALTERNATIVE_TIMING_FORMATS = """\
-<tt xml:lang="en-us"
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_alternative_timing_formats():
+    return """\
+<tt xml:lang="en-US"
     xmlns="http://www.w3.org/ns/ttml"
     xmlns:tts='http://www.w3.org/ns/ttml#styling'
     >
@@ -1125,9 +1237,11 @@ DFXP_WITH_ALTERNATIVE_TIMING_FORMATS = """\
 </tt>"""
 
 
-SAMPLE_DFXP_EMPTY_PARAGRAPH = """
+@pytest.fixture(scope="session")
+def sample_dfxp_empty_paragraph():
+    return """
 <?xml version="1.0" encoding="UTF-16"?>
-<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml">
+<tt xml:lang="en-US" xmlns="http://www.w3.org/ns/ttml">
 <body>
   <div>
     <p begin="0:00:02.07" end="0:00:05.07"></p>
@@ -1136,3 +1250,280 @@ SAMPLE_DFXP_EMPTY_PARAGRAPH = """
  </body>
 </tt>
 """
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_only_spaces_paragraph():
+    return """
+<?xml version="1.0" encoding="UTF-16"?>
+<tt xml:lang="en-US" xmlns="http://www.w3.org/ns/ttml">
+<body>
+  <div>
+    <p begin="00:00:00.36" end="00:00:00.43">
+    </p>
+    <p begin="0:00:02.07" end="0:00:05.07">         </p>
+    <p begin="0:00:05.07" end="0:00:06.21"> </p>
+    <p begin="0:00:07.07" end="0:00:08.21">Test tabs, spaces and new line</p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_incorrect_time_format():
+    return """
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml">
+<body>
+  <div>
+    <p begin="0:00:02.07" end="0:05">Hey! Check out this error!</p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_missing_begin():
+    return """
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml">
+<body>
+  <div>
+    <p region="speaker" tts:textAlign="left">###</p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_missing_end_and_dur():
+    return """
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml">
+<body>
+  <div>
+    <p begin="0:00:00.360" end="">Space is big.</p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_frame_timing():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <layout>
+   <region tts:origin="10% 10%" xml:id="b1"/>
+   <region tts:origin="40% 40%" xml:id="b2"/>
+   <region tts:origin="10% 70%" xml:id="b3"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:00:09:20" end="00:00:12:07" region="b1">
+    ABC
+   </p>
+  </div>
+ </body>
+</tt>"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_empty_cue():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <layout>
+   <region tts:origin="10% 10%" xml:id="bottom"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:00:01.209" end="00:00:02.312" region="bottom">abc</p>
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom"></p>
+  </div>
+ </body>
+</tt>"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_empty_cue_output():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+   <styling>
+      <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
+   </styling>
+   <layout>
+      <region tts:displayAlign="after" tts:origin="10% 10%" tts:textAlign="start" xml:id="r0"/>
+      <region tts:displayAlign="after" tts:extent="80% 85%" tts:origin="10% 10%" tts:textAlign="start" xml:id="r1"/>
+   </layout>
+ </head>
+ <body>
+   <div region="r0" xml:lang="en-US">
+     <p begin="00:00:01.209" end="00:00:02.312" region="r1" style="default">
+       abc
+     </p>
+   </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_invalid_positioning_value_template():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <layout>
+   <region tts:origin="{origin}" xml:id="bottom"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom">
+    ( clock ticking )
+   </p>
+  </div>
+ </body>
+</tt>"""
+
+
+# TODO - notice that there's no "bottom" region specified in the <layout>
+# region, but it's referenced by the <div>. Decide if this is ok enough
+@pytest.fixture(scope="session")
+def sample_dfxp_multiple_captions_with_the_same_timing():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <layout>
+   <region tts:origin="10% 10%" xml:id="b1"/>
+   <region tts:origin="40% 40%" xml:id="b2"/>
+   <region tts:origin="10% 70%" xml:id="b3"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:00:09.209" end="00:00:12.312" region="b1">
+    Some text here
+   </p>
+   <p begin="00:00:09.209" end="00:00:12.312" region="b2">
+    Some text there
+   </p>
+   <p begin="00:00:09.209" end="00:00:12.312" region="b3">
+    Caption texts are everywhere!
+   </p>
+  </div>
+ </body>
+</tt>"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_ampersand_character():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <styling>
+   <style tts:color="white" tts:fontFamily="monospace" tts:fontSize="1c" xml:id="default"/>
+  </styling>
+  <layout>
+   <region tts:displayAlign="after" tts:textAlign="start" xml:id="bottom"/>
+   <region tts:displayAlign="before" tts:extent="70% 90%" tts:origin="20% 5%" tts:textAlign="left" xml:id="r0"/>
+  </layout>
+ </head>
+ <body>
+  <div region="bottom" xml:lang="en-US">
+   <p begin="00:04:36.800" end="00:04:40.800" region="r0" style="default">
+    MAJOR FUNDING PROVIDED BY &amp;
+   </p>
+  </div>
+ </body>
+</tt>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_with_nested_spans():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
+    xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <styling>
+   <style xml:id="s1" tts:fontstyle="italic"/>
+   <style xml:id="s2" tts:fontweight="bold" />
+   <style xml:id="s3" tts:textdecoration="underline" />
+  </styling>
+  <layout>
+  <region xml:id="bottom" tts:displayAlign="after" tts:textAlign="center"></region>
+  </layout>
+ </head>
+ <body>
+  <div xml:lang="en-US" region="bottom">
+   <p begin="00:00:03.209" end="00:00:08.312" region="bottom">
+    That is <span style="s3"><span style="s2"><span style="s1">nested</span></span></span>.
+   </p>
+  </div>
+ </body>
+</tt>"""
+
+
+@pytest.fixture(scope="session")
+def sample_dfxp_default_styling_p_tags():
+    return """\
+<?xml version="1.0" encoding="utf-8"?>
+<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml"
+    xmlns:tts="http://www.w3.org/ns/ttml#styling">
+ <head>
+  <styling>
+   <style xml:id="p" tts:color="#ffeedd" tts:fontFamily="Arial"
+          tts:fontSize="10pt" tts:textAlign="center"/>
+  </styling>
+  <layout>
+  <region tts:displayAlign="after" tts:textAlign="center" xml:id="bottom"></region>
+  </layout>
+ </head>
+ <body>
+  <div xml:lang="en-US" region="bottom">
+   <p begin="00:00:09.209" end="00:00:12.312" region="bottom" style="p">
+    ( clock ticking )
+   </p>
+   <p begin="00:00:14.848" end="00:00:17.000" region="bottom" style="p">
+    MAN:<br/>
+    When we think<br/>
+    \u266a ...say bow, wow, \u266a
+   </p>
+   <p begin="00:00:17.000" end="00:00:18.752" region="bottom" style="p">
+    <span tts:textalign="right">we have this vision of Einstein</span>
+   </p>
+   <p begin="00:00:18.752" end="00:00:20.887" region="bottom" style="p">
+   <br/>
+    as an old, wrinkly man<br/>
+    with white hair.
+   </p>
+   <p begin="00:00:20.887" end="00:00:26.760" region="bottom" style="p">
+    MAN 2:<br/>
+    E equals m c-squared is<br/>
+    not about an old Einstein.
+   </p>
+   <p begin="00:00:26.760" end="00:00:32.200" region="bottom" style="p">
+    MAN 2:<br/>
+    It's all about an eternal Einstein.
+   </p>
+   <p begin="00:00:32.200" end="00:00:36.200" region="bottom" style="p">
+    &lt;LAUGHING &amp; WHOOPS!&gt;
+   </p>
+  </div>
+ </body>
+</tt>"""

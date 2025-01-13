@@ -1,9 +1,0 @@
-beautifulsoup4>=4.8.1
-lxml>=3.2.3
-cssutils>=0.9.10
-Pillow>=7.0.0
-fonttools~=4.33.3
-langcodes~=3.3.0
-arabic-reshaper==3.0.0
-python-bidi==0.4.2
-git+https://github.com/castlabs/striprtf.git@037f05cdf5ba230ae29a6bf629d13cee52da7c3f#egg=striprtf

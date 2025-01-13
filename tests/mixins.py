@@ -1,8 +1,29 @@
-from bs4 import BeautifulSoup
 import re
 
+import pytest
+from bs4 import BeautifulSoup
 
-class WebVTTTestingMixIn(object):
+from pycaption.exceptions import InvalidInputError
+
+
+class ReaderTestingMixIn:
+    """
+    Provide test case capabilities for asserting common Reader functionalities.
+    """
+
+    def assert_positive_answer_for_detection(self, matching_sample):
+        assert self.reader.detect(matching_sample) is True
+
+    def assert_negative_answer_for_detection(self, different_sample):
+        assert self.reader.detect(different_sample) is False
+
+    def test_reader_only_supports_unicode_input(self):
+        with pytest.raises(InvalidInputError) as exc_info:
+            self.reader.read(b'')
+        assert exc_info.value.args[0] == 'The content is not a unicode string.'
+
+
+class WebVTTTestingMixIn:
     """
     Provide specialized test case capabilities for asserting on WebVTT content.
     """
@@ -10,16 +31,17 @@ class WebVTTTestingMixIn(object):
     def _extract_webvtt_captions(self, content):
         return tuple(line.strip() for line in content.splitlines())
 
-    def assertWebVTTEquals(self, first, second):
+    def assert_webvtt_equals(self, first, second):
         """
         Assert that two WebVTT contents are equal.
         """
         first_items = self._extract_webvtt_captions(first)
         second_items = self._extract_webvtt_captions(second)
-        self.assertEqual(first_items, second_items)
+
+        assert first_items == second_items
 
 
-class SRTTestingMixIn(object):
+class SRTTestingMixIn:
     """
     Provide specialized test case capabilities for asserting on SRT content.
     """
@@ -27,19 +49,19 @@ class SRTTestingMixIn(object):
     def _extract_srt_captions(self, content):
         return tuple(line.strip() for line in content.splitlines())
 
-    def assertSRTEquals(self, first, second):
+    def assert_srt_equals(self, first, second):
         """
         Assert that two SRT contents are equal.
         """
         first_items = self._extract_srt_captions(first)
         second_items = self._extract_srt_captions(second)
-        self.assertEqual(first_items, second_items)
+
+        assert first_items == second_items
 
 
-class CaptionSetTestingMixIn(object):
-
-    def assertCaptionSetAlmostEquals(self, first, second,
-                                     tolerance_microseconds):
+class CaptionSetTestingMixIn:
+    def assert_captionset_almost_equals(self, first, second,
+                                        tolerance_microseconds):
         """
         Assert that two caption sets have equal text except for newlines,
         and differences in timing that are less than tolerance_microseconds.
@@ -50,14 +72,12 @@ class CaptionSetTestingMixIn(object):
 
         def get_text_for_caption(caption):
             text = caption.get_text()
-            text = re.sub('\s+', ' ', text)
+            text = re.sub(r'\s+', ' ', text)
 
             return text
 
         text_1 = [get_text_for_caption(caption) for caption in captions_1]
         text_2 = [get_text_for_caption(caption) for caption in captions_2]
-
-        self.assertEqual(text_1, text_2)
 
         def close_enough(ts1, ts2):
             return abs(ts1 - ts2) < tolerance_microseconds
@@ -67,17 +87,19 @@ class CaptionSetTestingMixIn(object):
             for caption_1, caption_2 in zip(captions_1, captions_2)
             if not close_enough(caption_1.start, caption_2.start)
         ]
-        self.assertEqual(start_differences, [])
 
         end_differences = [
             (caption_1.end, caption_2.end)
             for caption_1, caption_2 in zip(captions_1, captions_2)
             if not close_enough(caption_1.end, caption_2.end)
         ]
-        self.assertEqual(end_differences, [])
+
+        assert text_1 == text_2
+        assert start_differences == []
+        assert end_differences == []
 
 
-class DFXPTestingMixIn(object):
+class DFXPTestingMixIn:
     """
     Provide specialized test case capabilities for asserting on DFXP content.
     """
@@ -98,9 +120,9 @@ class DFXPTestingMixIn(object):
         for paragraph in soup('p'):
             paragraph.string = paragraph.text.strip()
 
-    def assertDFXPEquals(self, first, second,
-                         ignore_styling=False,
-                         ignore_spans=False):
+    def assert_dfxp_equals(self, first, second,
+                           ignore_styling=False,
+                           ignore_spans=False):
         first_soup = BeautifulSoup(first, 'lxml')
         second_soup = BeautifulSoup(second, 'lxml')
 
@@ -115,10 +137,10 @@ class DFXPTestingMixIn(object):
         self._trim_text(first_soup)
         self._trim_text(second_soup)
 
-        self.assertEqual(first_soup, second_soup)
+        assert first_soup == second_soup
 
 
-class SAMITestingMixIn(object):
+class SAMITestingMixIn:
     """
     Provide specialized test case capabilities for asserting on SAMI content.
     """
@@ -126,12 +148,32 @@ class SAMITestingMixIn(object):
     def _extract_sami_captions(self, soup):
         return tuple(
             (caption.attrs['start'], caption.p.text.strip())
-            for caption in soup.select('sync'))
+            for caption in soup.select('sync')
+        )
 
-    def assertSAMIEquals(self, first, second):
+    def assert_sami_captions_equal(self, first, second):
         first_soup = BeautifulSoup(first, 'lxml')
         second_soup = BeautifulSoup(second, 'lxml')
 
         first_items = self._extract_sami_captions(first_soup)
         second_items = self._extract_sami_captions(second_soup)
-        self.assertEqual(first_items, second_items)
+
+        assert first_items == second_items
+
+
+class MicroDVDTestingMixIn:
+    """
+    Provide specialized test case capabilities for asserting on MicroDVD content.
+    """  # noqa
+
+    def _extract_micro_dvd_captions(self, content):
+        return tuple(line.strip() for line in content.splitlines())
+
+    def assert_microdvd_equals(self, first, second):
+        """
+        Assert that two MicroDVD contents are equal.
+        """
+        first_items = self._extract_micro_dvd_captions(first)
+        second_items = self._extract_micro_dvd_captions(second)
+
+        assert first_items == second_items

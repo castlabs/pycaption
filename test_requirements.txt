@@ -1,0 +1,5 @@
+pytest
+pytest-cov
+beautifulsoup4>=4.12.1
+lxml>=4.9.1
+cssutils>=2.0.0

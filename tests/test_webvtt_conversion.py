@@ -1,72 +1,119 @@
-import unittest
-
-from builtins import str
+import re
 
 from pycaption import (
-    WebVTTReader, WebVTTWriter, SRTWriter, SAMIWriter, DFXPWriter)
-
-from tests.samples.dfxp import SAMPLE_DFXP
-from tests.samples.sami import SAMPLE_SAMI
-from tests.samples.srt import SAMPLE_SRT
-from tests.samples.webvtt import (
-    SAMPLE_WEBVTT, SAMPLE_WEBVTT_FROM_WEBVTT,
-    SAMPLE_WEBVTT_FROM_DFXP_WITH_POSITIONING, SAMPLE_WEBVTT_WITH_CUE_SETTINGS
+    SAMIReader, SRTReader, WebVTTReader, WebVTTWriter, DFXPWriter,
+    MicroDVDWriter,
 )
+
 from tests.mixins import (
-    WebVTTTestingMixIn, DFXPTestingMixIn, SAMITestingMixIn, SRTTestingMixIn
+    WebVTTTestingMixIn, DFXPTestingMixIn, MicroDVDTestingMixIn,
 )
 
 
-class WebVTTtoWebVTTTestCase(unittest.TestCase, WebVTTTestingMixIn):
+class TestSAMItoWebVTT(WebVTTTestingMixIn):
+    def test_conversion(self, sample_webvtt_from_sami, sample_sami):
+        caption_set = SAMIReader().read(sample_sami)
+        results = WebVTTWriter(
+            video_width=640, video_height=360).write(caption_set)
 
-    def test_webvtt_to_webvtt_conversion(self):
-        caption_set = WebVTTReader().read(SAMPLE_WEBVTT)
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_sami, results)
+
+    def test_style_tags_conversion(self, sample_webvtt_from_sami_with_style,
+                                   sample_sami_with_style_tags):
+        caption_set = SAMIReader().read(sample_sami_with_style_tags)
+        results = WebVTTWriter(
+            video_width=640, video_height=360).write(caption_set)
+
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_sami_with_style, results)
+
+    def test_css_inline_style_conversion(
+            self, sample_webvtt_from_sami_with_style,
+            sample_sami_with_css_inline_style):
+        caption_set = SAMIReader().read(sample_sami_with_css_inline_style)
+        results = WebVTTWriter(
+            video_width=640, video_height=360).write(caption_set)
+
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_sami_with_style, results)
+
+    def test_css_id_style_conversion(
+            self, sample_webvtt_from_sami_with_id_style,
+            sample_sami_with_css_id_style):
+        caption_set = SAMIReader().read(sample_sami_with_css_id_style)
+        results = WebVTTWriter(
+            video_width=640, video_height=360).write(caption_set)
+
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_sami_with_id_style,
+                                  results)
+
+
+class TestSRTtoWebVTT(WebVTTTestingMixIn):
+    def test_srt_to_webvtt_conversion(self, sample_webvtt_from_srt, sample_srt):
+        caption_set = SRTReader().read(sample_srt)
         results = WebVTTWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertWebVTTEquals(SAMPLE_WEBVTT_FROM_WEBVTT, results)
 
-    def test_cue_settings_are_kept(self):
-        caption_set = WebVTTReader().read(SAMPLE_WEBVTT_WITH_CUE_SETTINGS)
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_srt, results)
+
+
+class TestWebVTTtoWebVTT(WebVTTTestingMixIn):
+    def test_webvtt_to_webvtt_conversion(self, sample_webvtt_from_webvtt,
+                                         sample_webvtt):
+        caption_set = WebVTTReader().read(sample_webvtt)
+        results = WebVTTWriter().write(caption_set)
+
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_webvtt, results)
+
+    def test_cue_settings_are_kept(self, sample_webvtt_with_cue_settings):
+        caption_set = WebVTTReader().read(sample_webvtt_with_cue_settings)
 
         webvtt = WebVTTWriter().write(caption_set)
 
-        self.assertEqual(SAMPLE_WEBVTT_WITH_CUE_SETTINGS, webvtt)
+        assert sample_webvtt_with_cue_settings == webvtt
 
-    def test_positioning_is_kept(self):
+    def test_positioning_is_kept(self,
+                                 sample_webvtt_keeps_positioning):
         caption_set = WebVTTReader().read(
-            SAMPLE_WEBVTT_FROM_DFXP_WITH_POSITIONING)
+            sample_webvtt_keeps_positioning)
         results = WebVTTWriter().write(caption_set)
-        self.assertEqual(
-            SAMPLE_WEBVTT_FROM_DFXP_WITH_POSITIONING, results)
+
+        assert sample_webvtt_keeps_positioning == results
+
+    def test_output_timestamps(self, sample_webvtt_timestamps):
+        expected_timestamp_line_pattern = re.compile(
+            r'^(\d{2,}):(\d{2})(:\d{2})?\.(\d{3}) '
+            r'--> (\d{2,}):(\d{2})(:\d{2})?\.(\d{3})')
+
+        caption_set = WebVTTReader().read(sample_webvtt_timestamps)
+        results = WebVTTWriter().write(caption_set).splitlines()
+
+        assert re.match(expected_timestamp_line_pattern, results[2])
+        assert re.match(expected_timestamp_line_pattern, results[5])
 
 #     # TODO: Write a test that includes a WebVTT file with style tags
 #     # That will fail because the styles used in the cues are not tracked.
 
 
-class WebVTTtoSAMITestCase(unittest.TestCase, SAMITestingMixIn):
-
-    def test_webvtt_to_sami_conversion(self):
-        caption_set = WebVTTReader().read(SAMPLE_WEBVTT)
-        results = SAMIWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertSAMIEquals(SAMPLE_SAMI, results)
-
-
-class WebVTTtoDFXPTestCase(unittest.TestCase, DFXPTestingMixIn):
-
-    def test_webvtt_to_dfxp_conversion(self):
-        caption_set = WebVTTReader().read(SAMPLE_WEBVTT)
+class TestWebVTTtoDFXP(DFXPTestingMixIn):
+    def test_conversion(self, sample_dfxp, sample_webvtt):
+        caption_set = WebVTTReader().read(sample_webvtt)
         results = DFXPWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertDFXPEquals(
-            SAMPLE_DFXP, results, ignore_styling=True, ignore_spans=True
+
+        assert isinstance(results, str)
+        self.assert_dfxp_equals(
+            sample_dfxp, results, ignore_styling=True, ignore_spans=True
         )
 
 
-class WebVTTtoSRTTestCase(unittest.TestCase, SRTTestingMixIn):
+class TestWebVTTtoMicroDVD(MicroDVDTestingMixIn):
+    def test_webvtt_to_microdvd_conversion(self, sample_microdvd,
+                                           sample_webvtt):
+        caption_set = WebVTTReader().read(sample_webvtt)
+        results = MicroDVDWriter().write(caption_set)
 
-    def test_webvtt_to_srt_conversion(self):
-        caption_set = WebVTTReader().read(SAMPLE_WEBVTT)
-        results = SRTWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertSRTEquals(SAMPLE_SRT, results)
+        assert isinstance(results, str)
+        self.assert_microdvd_equals(sample_microdvd, results)

@@ -1,166 +1,111 @@
-import unittest
-
-from builtins import str
-
 from pycaption import (
-    SAMIReader, SAMIWriter, SRTWriter, DFXPWriter, WebVTTWriter)
-
-from .samples.dfxp import (
-    DFXP_FROM_SAMI_WITH_POSITIONING, SAMPLE_DFXP_FROM_SAMI_WITH_MARGINS,
-    SAMPLE_DFXP_FROM_SAMI_WITH_LANG_MARGINS, SAMPLE_DFXP_FROM_SAMI_WITH_SPAN,
-    SAMPLE_DFXP_FROM_SAMI_WITH_BAD_SPAN_ALIGN
-)
-from .samples.sami import (
-    SAMPLE_SAMI, SAMPLE_SAMI_WITH_STYLE_TAGS, SAMPLE_SAMI_WITH_CSS_INLINE_STYLE,
-    SAMPLE_SAMI_WITH_CSS_ID_STYLE, SAMPLE_SAMI_SYNTAX_ERROR,
-    SAMPLE_SAMI_PARTIAL_MARGINS, SAMPLE_SAMI_PARTIAL_MARGINS_RELATIVIZED,
-    SAMPLE_SAMI_LANG_MARGIN, SAMPLE_SAMI_WITH_SPAN, SAMPLE_SAMI_WITH_BAD_SPAN_ALIGN,
-    SAMPLE_SAMI_WITH_MULTIPLE_SPAN_ALIGNS, SAMPLE_SAMI_NO_LANG,
-    SAMPLE_SAMI_WITH_LANG
-)
-from .samples.srt import SAMPLE_SRT
-from .samples.webvtt import (
-    SAMPLE_WEBVTT_FROM_SAMI, SAMPLE_WEBVTT_FROM_SAMI_WITH_STYLE,
-    SAMPLE_WEBVTT_FROM_SAMI_WITH_ID_STYLE
+    DFXPReader, SAMIReader, SAMIWriter, SRTReader, WebVTTReader,
 )
 
-from .mixins import SRTTestingMixIn, DFXPTestingMixIn, SAMITestingMixIn, WebVTTTestingMixIn
+from .mixins import SAMITestingMixIn
 
 # Arbitrary values used to test relativization
 VIDEO_WIDTH = 640
 VIDEO_HEIGHT = 360
 
 
-class SAMItoSAMITestCase(unittest.TestCase, SAMITestingMixIn):
+class TestDFXPtoSAMI(SAMITestingMixIn):
+    def setup_method(self):
+        self.reader = DFXPReader()
+        self.writer = SAMIWriter()
 
-    def test_sami_to_sami_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI)
-        results = SAMIWriter(relativize=False,
-                             fit_to_screen=False).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertSAMIEquals(SAMPLE_SAMI, results)
+    def test_dfxp_to_sami_conversion(self, sample_sami, sample_dfxp):
+        caption_set = self.reader.read(sample_dfxp)
+        result = self.writer.write(caption_set)
 
-    def test_is_relativized(self):
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami, result)
+
+    def test_dfxp_to_sami_with_nested_spans(
+            self, sample_sami_from_dfxp_with_nested_spans,
+            sample_dfxp_with_nested_spans):
+        caption_set = self.reader.read(sample_dfxp_with_nested_spans)
+        result = self.writer.write(caption_set)
+
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami_from_dfxp_with_nested_spans,
+                                        result)
+
+    def test_dfxp_to_sami_with_margins(
+            self, sample_dfxp_from_sami_with_margins):
+        caption_set = self.reader.read(sample_dfxp_from_sami_with_margins)
+        result = SAMIWriter(video_width=VIDEO_WIDTH,
+                            video_height=VIDEO_HEIGHT).write(caption_set)
+        margins = ["margin-right: 6.04%;",
+                   "margin-bottom: 0%;",
+                   "margin-top: 0%;",
+                   "margin-left: 6.04%;"]
+
+        assert all(margin in result for margin in margins)
+
+    def test_dfxp_empty_cue_to_sami(self, sample_sami_empty_cue_output,
+                                    sample_dfxp_empty_cue):
+        caption_set = self.reader.read(sample_dfxp_empty_cue)
+        result = self.writer.write(caption_set)
+
+        self.assert_sami_captions_equal(sample_sami_empty_cue_output, result)
+
+
+class TestSRTtoSAMI(SAMITestingMixIn):
+    def test_srt_to_sami_conversion(self, sample_sami, sample_srt):
+        caption_set = SRTReader().read(sample_srt)
+        result = SAMIWriter().write(caption_set)
+
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami, result)
+
+
+class TestSAMItoSAMI(SAMITestingMixIn):
+    def setup_method(self):
+        self.reader = SAMIReader()
+        self.writer = SAMIWriter()
+
+    def test_sami_to_sami_conversion(self, sample_sami):
+        caption_set = self.reader.read(sample_sami)
+        result = SAMIWriter(relativize=False,
+                            fit_to_screen=False).write(caption_set)
+
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami, result)
+
+    def test_sami_with_multi_lang(self, sample_sami_with_separate_multi_lang):
+        caption_set = self.reader.read(sample_sami_with_separate_multi_lang)
+        result = self.writer.write(caption_set)
+
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami_with_separate_multi_lang,
+                                        result)
+
+    def test_is_relativized(self, sample_sami_partial_margins_relativized,
+                            sample_sami_partial_margins):
         # Absolute positioning settings (e.g. px) are converted to percentages
-        caption_set = SAMIReader().read(SAMPLE_SAMI_PARTIAL_MARGINS)
+        caption_set = self.reader.read(sample_sami_partial_margins)
         result = SAMIWriter(
             video_width=VIDEO_WIDTH, video_height=VIDEO_HEIGHT
         ).write(caption_set)
-        self.assertSAMIEquals(result, SAMPLE_SAMI_PARTIAL_MARGINS_RELATIVIZED)
+
+        self.assert_sami_captions_equal(sample_sami_partial_margins_relativized,
+                                        result)
+
+    def test_missing_language_conversion(self, sample_sami_with_lang,
+                                         sample_sami_no_lang):
+        caption_set = self.reader.read(sample_sami_no_lang)
+        result = self.writer.write(caption_set)
+
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami_with_lang, result)
+        assert "lang: und;" in result
 
 
-class SAMItoSRTTestCase(unittest.TestCase, SRTTestingMixIn):
+class TestWebVTTtoSAMI(SAMITestingMixIn):
+    def test_webvtt_to_sami_conversion(self, sample_sami, sample_webvtt):
+        caption_set = WebVTTReader().read(sample_webvtt)
+        result = SAMIWriter().write(caption_set)
 
-    def test_sami_to_srt_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI)
-        results = SRTWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertSRTEquals(SAMPLE_SRT, results)
-
-
-class SAMItoDFXPTestCase(unittest.TestCase, DFXPTestingMixIn):
-
-    def test_sami_to_dfxp_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI)
-        results = DFXPWriter(relativize=False,
-                             fit_to_screen=False).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertDFXPEquals(
-            DFXP_FROM_SAMI_WITH_POSITIONING,
-            results
-        )
-
-    def test_sami_to_dfxp_with_margin(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_PARTIAL_MARGINS)
-        results = DFXPWriter(
-            relativize=False, fit_to_screen=False).write(caption_set)
-        self.assertDFXPEquals(
-            SAMPLE_DFXP_FROM_SAMI_WITH_MARGINS,
-            results
-        )
-
-    def test_sami_to_dfxp_with_margin_for_language(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_LANG_MARGIN)
-        results = DFXPWriter(
-            relativize=False, fit_to_screen=False).write(caption_set)
-        self.assertDFXPEquals(
-            SAMPLE_DFXP_FROM_SAMI_WITH_LANG_MARGINS,
-            results
-        )
-
-    def test_sami_to_dfxp_with_span(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_SPAN)
-        results = DFXPWriter(
-            relativize=False, fit_to_screen=False).write(caption_set)
-        self.assertDFXPEquals(
-            SAMPLE_DFXP_FROM_SAMI_WITH_SPAN,
-            results
-        )
-
-    def test_sami_to_dfxp_with_bad_span_align(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_BAD_SPAN_ALIGN)
-        results = DFXPWriter(
-            relativize=False, fit_to_screen=False).write(caption_set)
-        self.assertDFXPEquals(
-            SAMPLE_DFXP_FROM_SAMI_WITH_BAD_SPAN_ALIGN,
-            results
-        )
-
-    def test_sami_to_dfxp_ignores_multiple_span_aligns(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_MULTIPLE_SPAN_ALIGNS)
-        results = DFXPWriter(
-            relativize=False, fit_to_screen=False).write(caption_set)
-        self.assertDFXPEquals(
-            SAMPLE_DFXP_FROM_SAMI_WITH_BAD_SPAN_ALIGN,
-            results
-        )
-
-    def test_sami_to_dfxp_xml_output(self):
-        captions = SAMIReader().read(SAMPLE_SAMI_SYNTAX_ERROR)
-        results = DFXPWriter(relativize=False,
-                             fit_to_screen=False).write(captions)
-        self.assertTrue(isinstance(results, str))
-        self.assertTrue('xmlns="http://www.w3.org/ns/ttml"' in results)
-        self.assertTrue(
-            'xmlns:tts="http://www.w3.org/ns/ttml#styling"' in results)
-
-
-class SAMItoWebVTTTestCase(unittest.TestCase, WebVTTTestingMixIn):
-
-    def test_sami_to_webvtt_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI)
-        results = WebVTTWriter(
-            video_width=640, video_height=360).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertWebVTTEquals(SAMPLE_WEBVTT_FROM_SAMI, results)
-
-    def test_sami_with_style_tags_to_webvtt_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_STYLE_TAGS)
-        results = WebVTTWriter(
-            video_width=640, video_height=360).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertWebVTTEquals(SAMPLE_WEBVTT_FROM_SAMI_WITH_STYLE, results)
-
-    def test_sami_with_css_inline_style_to_webvtt_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_CSS_INLINE_STYLE)
-        results = WebVTTWriter(
-            video_width=640, video_height=360).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertWebVTTEquals(SAMPLE_WEBVTT_FROM_SAMI_WITH_STYLE, results)
-
-    def test_sami_with_css_id_style_to_webvtt_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_WITH_CSS_ID_STYLE)
-        results = WebVTTWriter(
-            video_width=640, video_height=360).write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertWebVTTEquals(SAMPLE_WEBVTT_FROM_SAMI_WITH_ID_STYLE, results)
-
-
-class SAMIWithMissingLanguage(unittest.TestCase, SAMITestingMixIn):
-
-    def test_sami_to_sami_conversion(self):
-        caption_set = SAMIReader().read(SAMPLE_SAMI_NO_LANG)
-        results = SAMIWriter().write(caption_set)
-        self.assertTrue(isinstance(results, str))
-        self.assertSAMIEquals(SAMPLE_SAMI_WITH_LANG, results)
-        self.assertTrue("lang: en-US;" in results)
+        assert isinstance(result, str)
+        self.assert_sami_captions_equal(sample_sami, result)

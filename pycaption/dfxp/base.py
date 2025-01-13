@@ -1358,7 +1358,6 @@ class _OrderedSet(list):
         if value in self:
             super().remove(value)
 
-
 class DFXPReaderNewLineFix(DFXPReader):
     def _translate_tag(self, tag):
         # convert text

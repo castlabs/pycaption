@@ -1,21 +1,24 @@
+import os
+from collections import defaultdict
 from datetime import timedelta
 from numbers import Number
 
 from .exceptions import CaptionReadError, CaptionReadTimingError
 
-DEFAULT_LANGUAGE_CODE = 'en-US'
+# `und` a special identifier for an undetermined language according to ISO 639-2
+DEFAULT_LANGUAGE_CODE = os.getenv("PYCAPTION_DEFAULT_LANG", "und")
 
 
 def force_byte_string(content):
     try:
-        return content.encode('UTF-8')
+        return content.encode("UTF-8")
     except UnicodeEncodeError:
-        raise RuntimeError('Invalid content encoding')
+        raise RuntimeError("Invalid content encoding")
     except UnicodeDecodeError:
         return content
 
 
-class CaptionConverter(object):
+class CaptionConverter:
     def __init__(self, captions=None):
         self.captions = captions if captions else []
 
@@ -33,7 +36,7 @@ class CaptionConverter(object):
             raise Exception(e)
 
 
-class BaseReader(object):
+class BaseReader:
     def __init__(self, *args, **kwargs):
         pass
 
@@ -44,12 +47,13 @@ class BaseReader(object):
             return False
 
     def read(self, content):
-        return CaptionSet()
+        return CaptionSet({DEFAULT_LANGUAGE_CODE: []})
 
 
-class BaseWriter(object):
-    def __init__(self, relativize=True, video_width=None, video_height=None,
-                 fit_to_screen=True):
+class BaseWriter:
+    def __init__(
+        self, relativize=True, video_width=None, video_height=None, fit_to_screen=True
+    ):
         """
         Initialize writer with the given parameters.
 
@@ -79,7 +83,8 @@ class BaseWriter(object):
             if self.relativize:
                 # Transform absolute values (e.g. px) into percentages
                 layout_info = layout_info.as_percentage_of(
-                    self.video_width, self.video_height)
+                    self.video_width, self.video_height
+                )
             if self.fit_to_screen:
                 # Make sure origin + extent <= 100%
                 layout_info = layout_info.fit_to_screen()
@@ -89,12 +94,12 @@ class BaseWriter(object):
         return content
 
 
-class Style(object):
+class Style:
     def __init__(self):
         pass
 
 
-class CaptionNode(object):
+class CaptionNode:
     """
     A single node within a caption, representing either
     text, a style, or a linebreak.
@@ -112,16 +117,19 @@ class CaptionNode(object):
     STYLE = 2
     BREAK = 3
 
-    def __init__(self, type_, layout_info=None):
+    def __init__(
+        self, type_, layout_info=None, content=None, start=None, position=None
+    ):
         """
         :type type_: int
         :type layout_info: Layout
         """
         self.type_ = type_
-        self.content = None
+        self.content = content
+        self.position = position
 
         # Boolean. Marks the beginning/ end of a Style node.
-        self.start = None
+        self.start = start
         self.layout_info = layout_info
 
     def __repr__(self):
@@ -130,35 +138,43 @@ class CaptionNode(object):
         if t == CaptionNode.TEXT:
             return repr(self.content)
         elif t == CaptionNode.BREAK:
-            return repr('BREAK')
+            return repr("BREAK")
         elif t == CaptionNode.STYLE:
-            return repr('STYLE: %s %s' % (self.start, self.content))
+            return repr(f"STYLE: {self.start} {self.content}")
         else:
-            raise RuntimeError('Unknown node type: ' + str(t))
+            raise RuntimeError(f"Unknown node type: {t}")
 
     @staticmethod
-    def create_text(text, layout_info=None):
-        data = CaptionNode(CaptionNode.TEXT, layout_info=layout_info)
-        data.content = text
-        return data
+    def create_text(text, layout_info=None, position=None):
+        return CaptionNode(
+            type_=CaptionNode.TEXT,
+            layout_info=layout_info,
+            position=position,
+            content=text,
+        )
 
     @staticmethod
     def create_style(start, content, layout_info=None):
-        data = CaptionNode(CaptionNode.STYLE, layout_info=layout_info)
-        data.content = content
-        data.start = start
-        return data
+        return CaptionNode(
+            type_=CaptionNode.STYLE,
+            layout_info=layout_info,
+            content=content,
+            start=start,
+        )
 
     @staticmethod
-    def create_break(layout_info=None):
-        return CaptionNode(CaptionNode.BREAK, layout_info=layout_info)
+    def create_break(layout_info=None, content=None):
+        return CaptionNode(
+            type_=CaptionNode.BREAK, layout_info=layout_info, content=content
+        )
 
 
-class Caption(object):
+class Caption:
     """
     A single caption, including the time and styling information
     for its display.
     """
+
     def __init__(self, start, end, nodes, style={}, layout_info=None):
         """
         Initialize the Caption object
@@ -175,11 +191,13 @@ class Caption(object):
         :type layout_info: Layout
         """
         if not isinstance(start, Number):
-            raise CaptionReadTimingError("Captions must be initialized with a"
-                                         " valid start time")
+            raise CaptionReadTimingError(
+                "Captions must be initialized with a" " valid start time"
+            )
         if not isinstance(end, Number):
-            raise CaptionReadTimingError("Captions must be initialized with a"
-                                         " valid end time")
+            raise CaptionReadTimingError(
+                "Captions must be initialized with a" " valid end time"
+            )
         if not nodes:
             raise CaptionReadError("Node list cannot be empty")
         self.start = start
@@ -207,42 +225,41 @@ class Caption(object):
         return self._format_timestamp(self.end, msec_separator)
 
     def __repr__(self):
-        return repr(
-            '{start} --> {end}\n{text}'.format(
-                start=self.format_start(),
-                end=self.format_end(),
-                text=self.get_text()
-            )
-        )
+        return repr(f"{self.format_start()} --> {self.format_end()}\n{self.get_text()}")
 
-    def get_text(self):
+    def get_text_nodes(self):
         """
         Get the text of the caption.
         """
+
         def get_text_for_node(node):
             if node.type_ == CaptionNode.TEXT:
                 return node.content
             if node.type_ == CaptionNode.BREAK:
-                return '\n'
-            return ''
-        text_nodes = [get_text_for_node(node) for node in self.nodes]
-        return ''.join(text_nodes).strip()
+                return "\n"
+            return ""
 
-    def _format_timestamp(self, value, msec_separator=None):
-        datetime_value = timedelta(milliseconds=(int(value / 1000)))
+        return [get_text_for_node(node) for node in self.nodes]
 
-        str_value = str(datetime_value)[:11]
-        if not datetime_value.microseconds:
-            str_value += '.000'
+    def get_text(self):
+        text_nodes = self.get_text_nodes()
+        return "".join(text_nodes).strip()
 
-        if msec_separator is not None:
-            str_value = str_value.replace(".", msec_separator)
-
-        return '0' + str_value
+    def _format_timestamp(self, microseconds, msec_separator=None):
+        duration = timedelta(microseconds=microseconds)
+        hours, rem = divmod(duration.seconds, 3600)
+        minutes, seconds = divmod(rem, 60)
+        milliseconds = f"{duration.microseconds // 1000:03d}"
+        timestamp = (
+            f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+            f"{msec_separator or '.'}{milliseconds:.3s}"
+        )
+        return timestamp
 
 
 class CaptionList(list):
-    """ A list of captions with a layout object attached to it """
+    """A list of captions with a layout object attached to it"""
+
     def __init__(self, iterable=None, layout_info=None):
         """
         :param iterable: An iterator used to populate the caption list
@@ -250,11 +267,10 @@ class CaptionList(list):
         """
         self.layout_info = layout_info
         args = [iterable] if iterable else []
-        super(CaptionList, self).__init__(*args)
+        super().__init__(*args)
 
     def __getslice__(self, i, j):
-        return CaptionList(
-            list.__getslice__(self, i, j), layout_info=self.layout_info)
+        return CaptionList(list.__getslice__(self, i, j), layout_info=self.layout_info)
 
     def __getitem__(self, y):
         item = list.__getitem__(self, y)
@@ -264,25 +280,24 @@ class CaptionList(list):
 
     def __add__(self, other):
         add_is_safe = (
-            not hasattr(other, 'layout_info') or
-            not other.layout_info or
-            self.layout_info == other.layout_info
+            not hasattr(other, "layout_info")
+            or not other.layout_info
+            or self.layout_info == other.layout_info
         )
         if add_is_safe:
-            return CaptionList(
-                list.__add__(self, other), layout_info=self.layout_info)
+            return CaptionList(list.__add__(self, other), layout_info=self.layout_info)
         else:
             raise ValueError(
-                "Cannot add CaptionList objects with different layout_info")
+                "Cannot add CaptionList objects with different layout_info"
+            )
 
     def __mul__(self, other):
-        return CaptionList(
-            list.__mul__(self, other), layout_info=self.layout_info)
+        return CaptionList(list.__mul__(self, other), layout_info=self.layout_info)
 
     __rmul__ = __mul__
 
 
-class CaptionSet(object):
+class CaptionSet:
     """
     A set of captions in potentially multiple languages,
     all representing the same underlying content.
@@ -290,6 +305,7 @@ class CaptionSet(object):
     The .layout_info attribute, keeps information that should be inherited
     by all the children.
     """
+
     def __init__(self, captions, styles={}, layout_info=None):
         """
         :param captions: A dictionary of the format {'language': CaptionList}
@@ -332,9 +348,7 @@ class CaptionSet(object):
         self._styles = styles
 
     def is_empty(self):
-        return all(
-            [len(captions) == 0 for captions in list(self._captions.values())]
-        )
+        return all([len(captions) == 0 for captions in list(self._captions.values())])
 
     def set_layout_info(self, lang, layout_info):
         self._captions[lang].layout_info = layout_info
@@ -403,6 +417,5 @@ def merge(captions):
             new_nodes.append(CaptionNode.create_break())
         for node in caption.nodes:
             new_nodes.append(node)
-    caption = Caption(
-        captions[0].start, captions[0].end, new_nodes, captions[0].style)
+    caption = Caption(captions[0].start, captions[0].end, new_nodes, captions[0].style)
     return caption

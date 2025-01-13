@@ -1,5 +1,5 @@
 include pycaption/english.pickle
 include pycaption/*.ttf
 include pycaption/*.otf
-recursive-exclude tests *
+recursive-include tests *
 include README.rst requirements.txt

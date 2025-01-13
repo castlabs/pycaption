@@ -7,9 +7,10 @@ CONVENTIONS:
   responsible for the recalculation should return a new object with the
   necessary modifications.
 """
-
+import re
 from enum import Enum
-from .exceptions import RelativizationError
+
+from .exceptions import RelativizationError, CaptionReadSyntaxError
 
 
 class UnitEnum(Enum):
@@ -42,8 +43,7 @@ class VerticalAlignmentEnum(Enum):
 
 
 class HorizontalAlignmentEnum(Enum):
-    """Enumeration object specifying the horizontal alignment preferences
-    """
+    """Enumeration object specifying the horizontal alignment preferences"""
     LEFT = 'left'
     CENTER = 'center'
     RIGHT = 'right'
@@ -51,7 +51,7 @@ class HorizontalAlignmentEnum(Enum):
     END = 'end'
 
 
-class Alignment(object):
+class Alignment:
     def __init__(self, horizontal, vertical):
         """
         :type horizontal: HorizontalAlignmentEnum
@@ -64,27 +64,24 @@ class Alignment(object):
 
     def __hash__(self):
         return hash(
-            hash(self.horizontal) * 83 +
-            hash(self.vertical) * 89 +
-            97
+            hash(self.horizontal) * 83
+            + hash(self.vertical) * 89
+            + 97
         )
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.horizontal == other.horizontal and
-            self.vertical == other.vertical
+            other
+            and type(self) == type(other)
+            and self.horizontal == other.horizontal
+            and self.vertical == other.vertical
         )
 
     def __repr__(self):
-        return "<Alignment ({horizontal} {vertical})>".format(
-            horizontal=self.horizontal, vertical=self.vertical
-        )
+        return f"<Alignment ({self.horizontal} {self.vertical})>"
 
     def serialized(self):
-        """Returns a tuple of the useful information regarding this object
-        """
+        """Returns a tuple of the useful information regarding this object"""
         return self.horizontal, self.vertical
 
     @classmethod
@@ -116,9 +113,9 @@ class Alignment(object):
         return cls(horizontal_obj, vertical_obj)
 
 
-class TwoDimensionalObject(object):
-    """Adds a couple useful methods to its subclasses, nothing fancy.
-    """
+class TwoDimensionalObject:
+    """Adds a couple useful methods to its subclasses, nothing fancy."""
+
     @classmethod
     # TODO - highly cachable. Should use WeakValueDictionary here to return
     # flyweights, not new objects.
@@ -126,9 +123,9 @@ class TwoDimensionalObject(object):
         """Instantiate the class from a value of the type "4px" or "5%"
         or any number concatenated with a measuring unit (member of UnitEnum)
 
-        :type attribute: unicode
+        :type attribute: str
         """
-        horizontal, vertical = str(attribute).split(' ')
+        horizontal, vertical = attribute.split(' ')
         horizontal = Size.from_string(horizontal)
         vertical = Size.from_string(vertical)
 
@@ -140,6 +137,7 @@ class Stretch(TwoDimensionalObject):
     or the padding in a rectangle (how much space should be left empty until
     text can be displayed)
     """
+
     def __init__(self, horizontal, vertical):
         """Use the .from_xxx methods. They know what's best for you.
 
@@ -160,14 +158,12 @@ class Stretch(TwoDimensionalObject):
         :return: True/False
         """
         return (
-            self.horizontal.unit == measure_unit and
-            self.vertical.unit == measure_unit
+            self.horizontal.unit == measure_unit
+            and self.vertical.unit == measure_unit
         )
 
     def __repr__(self):
-        return '<Stretch ({horizontal}, {vertical})>'.format(
-            horizontal=self.horizontal, vertical=self.vertical
-        )
+        return f'<Stretch ({self.horizontal}, {self.vertical})>'
 
     def serialized(self):
         """Returns a tuple of the useful attributes of this object"""
@@ -178,25 +174,24 @@ class Stretch(TwoDimensionalObject):
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.horizontal == other.horizontal and
-            self.vertical == other.vertical
+            other
+            and type(self) == type(other)
+            and self.horizontal == other.horizontal
+            and self.vertical == other.vertical
         )
 
     def __hash__(self):
         return hash(
-            hash(self.horizontal) * 59 +
-            hash(self.vertical) * 61 +
-            67
+            hash(self.horizontal) * 59
+            + hash(self.vertical) * 61
+            + 67
         )
 
     def __bool__(self):
         return True if self.horizontal or self.vertical else False
 
     def to_xml_attribute(self, **kwargs):
-        """Returns a unicode representation of this object as an xml attribute
-        """
+        """Returns a string representation of this object as an xml attribute"""
         return '{horizontal} {vertical}'.format(
             horizontal=self.horizontal.to_xml_attribute(),
             vertical=self.vertical.to_xml_attribute()
@@ -224,11 +219,12 @@ class Stretch(TwoDimensionalObject):
         )
 
 
-class Region(object):
+class Region:
     """Represents the spatial coordinates of a rectangle
 
     Don't instantiate by hand. use Region.from_points or Region.from_extent
     """
+
     @classmethod
     def from_points(cls, p1, p2):
         """Create a rectangle, knowing 2 points on the plane.
@@ -259,8 +255,7 @@ class Region(object):
 
     @property
     def extent(self):
-        """How wide this rectangle stretches (horizontally and vertically)
-        """
+        """How wide this rectangle stretches (horizontally and vertically)"""
         if hasattr(self, '_extent'):
             return self._extent
         else:
@@ -268,8 +263,7 @@ class Region(object):
 
     @property
     def origin(self):
-        """Out of its 4 points, returns the one closest to the origin
-        """
+        """Out of its 4 points, returns the one closest to the origin"""
         if hasattr(self, '_origin'):
             return self._origin
         else:
@@ -279,8 +273,7 @@ class Region(object):
 
     @property
     def lower_right_point(self):
-        """The point furthest from the origin from the rectangle's 4 points
-        """
+        """The point furthest from the origin from the rectangle's 4 points"""
         if hasattr(self, '_p2'):
             return Point.align_from_origin(self._p1, self._p2)[1]
         else:
@@ -288,23 +281,23 @@ class Region(object):
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.extent == other.extent and
-            self.origin == other.origin
+            other
+            and type(self) == type(other)
+            and self.extent == other.extent
+            and self.origin == other.origin
         )
 
     def __hash__(self):
         return hash(
-            hash(self.origin) * 71 +
-            hash(self.extent) * 73 +
-            79
+            hash(self.origin) * 71
+            + hash(self.extent) * 73
+            + 79
         )
 
 
 class Point(TwoDimensionalObject):
-    """Represent a point in 2d space.
-    """
+    """Represent a point in 2d space."""
+
     def __init__(self, x, y):
         """
         :type x: Size
@@ -324,7 +317,7 @@ class Point(TwoDimensionalObject):
 
     def add_stretch(self, stretch):
         """Returns another Point instance, whose coordinates are the sum of the
-         current Point's, and the Stretch instance's.
+        current Point's, and the Stretch instance's.
         """
         return Point(self.x + stretch.horizontal, self.y + stretch.vertical)
 
@@ -366,13 +359,10 @@ class Point(TwoDimensionalObject):
                     Point(max(p1.x, p2.x), max(p1.y, p2.y)))
 
     def __repr__(self):
-        return '<Point ({x}, {y})>'.format(
-            x=self.x, y=self.y
-        )
+        return f'<Point ({self.x}, {self.y})>'
 
     def serialized(self):
-        """Returns the "useful" values of this object.
-        """
+        """Returns the "useful" values of this object."""
         return (
             None if not self.x else self.x.serialized(),
             None if not self.y else self.y.serialized()
@@ -380,34 +370,33 @@ class Point(TwoDimensionalObject):
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.x == other.x and
-            self.y == other.y
+            other
+            and type(self) == type(other)
+            and self.x == other.x
+            and self.y == other.y
         )
 
     def __hash__(self):
         return hash(
-            hash(self.x) * 51 +
-            hash(self.y) * 53 +
-            57
+            hash(self.x) * 51
+            + hash(self.y) * 53
+            + 57
         )
 
     def __bool__(self):
         return True if self.x or self.y else False
 
     def to_xml_attribute(self, **kwargs):
-        """Returns a unicode representation of this object as an xml attribute
-        """
-        return '{x} {y}'.format(
-            x=self.x.to_xml_attribute(), y=self.y.to_xml_attribute())
+        """Returns a string representation of this object as an xml attribute"""
+        return f'{self.x.to_xml_attribute()} {self.y.to_xml_attribute()}'
 
 
-class Size(object):
+class Size:
     """Ties together a number with a unit, to represent a size.
 
     Use as value objects! (don't change after creation)
     """
+
     def __init__(self, value, unit):
         """
         :param value: A number (float or int will do)
@@ -415,7 +404,7 @@ class Size(object):
         """
         if value is None:
             raise ValueError("Size must be initialized with a value.")
-        if not isinstance(unit,UnitEnum):
+        if not isinstance(unit, UnitEnum):
             raise ValueError("Size must be initialized with a valid unit.")
 
         self.value = float(value)
@@ -439,7 +428,6 @@ class Size(object):
 
     def __lt__(self, other):
         return self.value < other.value
-
 
     def __add__(self, other):
         if self.unit == other.unit:
@@ -467,10 +455,12 @@ class Size(object):
         # The input must be valid so that any conversion can be done
         if not (video_width or video_height):
             raise RelativizationError(
-                "Either video width or height must be given as a reference")
+                "At least one of video width or height"
+                " must be given as a reference")
         elif video_width and video_height:
             raise RelativizationError(
-                "Only video width or height can be given as reference")
+                "Only one of video width or height can be given as reference"
+                " per value being converted")
 
         if unit == UnitEnum.EM:
             # TODO: Implement proper conversion of em in function of font-size
@@ -509,56 +499,39 @@ class Size(object):
         size object
 
         :param string: a number concatenated to any of the UnitEnum members.
-        :type string: unicode
+        :type string: str
         :rtype: Size
         """
-
-        raw_number = string
-        for unit in list(UnitEnum):
-            if raw_number.endswith(unit.value):
-                raw_number = raw_number.rstrip(unit.value)
-                break
+        size_pattern = re.compile(
+            r"^(((?P<value>\d+(\.\d+)?)(?P<unit>"
+            fr"{'|'.join([unit.value for unit in UnitEnum])}))|0)$")
+        match = size_pattern.search(string)
+        if not match:
+            raise CaptionReadSyntaxError(
+                f"Invalid size: {string}. Please make sure the provided value "
+                "is a number followed by one of the supported units: "
+                f"{', '.join([unit.value for unit in UnitEnum])}.")
+        unit = match.group("unit")
+        if unit:
+            value = match.group("value")
+            return cls(value, UnitEnum(unit))
         else:
-            unit = None
-
-        if unit is not None:
-            value = None
-            try:
-                value = float(raw_number)
-                value = int(raw_number)
-            except ValueError:
-                pass
-
-            if value is None:
-                raise ValueError(
-                    """Couldn't recognize the value "{value}" as a number"""
-                    .format(value=raw_number)
-                )
-            instance = cls(value, unit)
-            return instance
-        else:
-            raise ValueError(
-                "The specified value is not valid because its unit "
-                "is not recognized: {value}. "
-                "The only supported units are: {supported}"
-                .format(value=raw_number, supported=', '.join(UnitEnum._member_map_))
-            )
+            # If the unit is missing, the only accepted alternative is zero
+            return cls(match.group(0), UnitEnum.PIXEL)
 
     def __repr__(self):
-        return '<Size ({value} {unit})>'.format(
-            value=self.value, unit=self.unit.value
-        )
+        return f'<Size ({self.value} {self.unit.value})>'
 
     def __str__(self):
         value = round(self.value, 2)
         if value.is_integer():
-            s = "{}".format(int(value))
+            s = f"{int(value)}"
         else:
-            s = "{:.2f}".format(value).rstrip('0').rstrip('.')
-        return "{}{}".format(s, self.unit.value)
+            s = f"{value:.2f}".rstrip('0').rstrip('.')
+        return f"{s}{self.unit.value}"
 
     def to_xml_attribute(self, **kwargs):
-        """Returns a unicode representation of this object, as an xml attribute
+        """Returns a string representation of this object, as an xml attribute
         """
         return str(self)
 
@@ -568,24 +541,24 @@ class Size(object):
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.value == other.value and
-            self.unit == other.unit
+            other
+            and type(self) == type(other)
+            and self.value == other.value
+            and self.unit == other.unit
         )
 
     def __hash__(self):
         return hash(
-            hash(self.value) * 41 +
-            hash(self.unit) * 43 +
-            47
+            hash(self.value) * 41
+            + hash(self.unit) * 43
+            + 47
         )
 
     def __bool__(self):
         return self.unit in UnitEnum and self.value is not None
 
 
-class Padding(object):
+class Padding:
     """Represents padding information. Consists of 4 Size objects, representing
     padding from (in this order): before (up), after (down), start (left) and
     end (right).
@@ -593,6 +566,7 @@ class Padding(object):
     A valid Padding object must always have all paddings set and different from
     None. If this is not true Writers may fail for they rely on this assumption.
     """
+
     def __init__(self, before=None, after=None, start=None, end=None):
         """
         :type before: Size
@@ -626,7 +600,7 @@ class Padding(object):
         :param attribute: a string like object, representing a dfxp attr. value
         :return: a Padding object
         """
-        values_list = str(attribute).split(' ')
+        values_list = attribute.split(' ')
         sizes = []
 
         for value in values_list:
@@ -641,24 +615,20 @@ class Padding(object):
         elif len(sizes) == 4:
             return cls(sizes[0], sizes[2], sizes[3], sizes[1])
         else:
-            raise ValueError('The provided value "{value}" could not be '
+            raise ValueError(f'The provided value "{attribute}" could not be '
                              "parsed into the a padding. Check out "
                              "http://www.w3.org/TR/ttaf1-dfxp/"
                              "#style-attribute-padding for the definition "
-                             "and examples".format(value=attribute))
+                             "and examples")
 
     def __repr__(self):
         return (
-            "<Padding (before: {before}, after: {after}, start: {start}, "
-            "end: {end})>".format(
-                before=self.before, after=self.after, start=self.start,
-                end=self.end
-            )
+            f"<Padding (before: {self.before}, after: {self.after}, "
+            f"start: {self.start}, end: {self.end})>"
         )
 
     def serialized(self):
-        """Returns a tuple containing the useful values of this object
-        """
+        """Returns a tuple containing the useful values of this object"""
         return (
             None if not self.before else self.before.serialized(),
             None if not self.after else self.after.serialized(),
@@ -668,27 +638,27 @@ class Padding(object):
 
     def __eq__(self, other):
         return (
-            other and
-            type(self) == type(other) and
-            self.before == other.before and
-            self.after == other.after and
-            self.start == other.start and
-            self.end == other.end
+            other
+            and type(self) == type(other)
+            and self.before == other.before
+            and self.after == other.after
+            and self.start == other.start
+            and self.end == other.end
         )
 
     def __hash__(self):
         return hash(
-            hash(self.before) * 19 +
-            hash(self.after) * 23 +
-            hash(self.start) * 29 +
-            hash(self.end) * 31 +
-            37
+            hash(self.before) * 19
+            + hash(self.after) * 23
+            + hash(self.start) * 29
+            + hash(self.end) * 31
+            + 37
         )
 
     def to_xml_attribute(
             self, attribute_order=('before', 'end', 'after', 'start'),
             **kwargs):
-        """Returns a unicode representation of this object as an xml attribute
+        """Returns a string representation of this object as an xml attribute
 
         TODO - should extend the attribute_order tuple to contain 4 tuples,
         so we can reduce the output length to 3, 2 or 1 element.
@@ -732,13 +702,14 @@ class Padding(object):
         return is_relative
 
 
-class Layout(object):
+class Layout:
     """Should encapsulate all the information needed to determine (as correctly
     as possible) the layout (positioning) of elements on the screen.
 
      Inheritance of this property, from the CaptionSet to its children is
      specific for each caption type.
     """
+
     def __init__(self, origin=None, extent=None, padding=None, alignment=None,
                  webvtt_positioning=None, inherit_from=None):
         """
@@ -756,7 +727,7 @@ class Layout(object):
 
         :type alignment: Alignment
 
-        :type webvtt_positioning: unicode
+        :type webvtt_positioning: str
         :param webvtt_positioning: A string with the raw WebVTT cue settings.
             This is used so that WebVTT positioning isn't lost on conversion
             from WebVTT to WebVTT. It is needed only because pycaption
@@ -787,16 +758,12 @@ class Layout(object):
 
     def __repr__(self):
         return (
-            "<Layout (origin: {origin}, extent: {extent}, "
-            "padding: {padding}, alignment: {alignment})>".format(
-                origin=self.origin, extent=self.extent, padding=self.padding,
-                alignment=self.alignment
-            )
+            f"<Layout (origin: {self.origin}, extent: {self.extent}, "
+            f"padding: {self.padding}, alignment: {self.alignment})>"
         )
 
     def serialized(self):
-        """Returns nested tuple containing the "useful" values of this object
-        """
+        """Returns nested tuple containing the "useful" values of this object"""
         return (
             None if not self.origin else self.origin.serialized(),
             None if not self.extent else self.extent.serialized(),
@@ -806,11 +773,11 @@ class Layout(object):
 
     def __eq__(self, other):
         return (
-            type(self) == type(other) and
-            self.origin == other.origin and
-            self.extent == other.extent and
-            self.padding == other.padding and
-            self.alignment == other.alignment
+            type(self) == type(other)
+            and self.origin == other.origin
+            and self.extent == other.extent
+            and self.padding == other.padding
+            and self.alignment == other.alignment
         )
 
     def __ne__(self, other):
@@ -854,7 +821,7 @@ class Layout(object):
 
     def fit_to_screen(self):
         """
-        If extent is not set or if origin + extent > 100%, (re)calculate it
+        If extent is not set or if origin + extent > 90%, (re)calculate it
         based on origin. It is a pycaption fix for caption files that are
         technically valid but contain inconsistent settings that may cause
         long captions to be cut out of the screen.
@@ -865,8 +832,8 @@ class Layout(object):
 
         if self.origin:
             # Calculated values to be used if replacement is needed
-            diff_horizontal = Size(100 - self.origin.x.value, UnitEnum.PERCENT)
-            diff_vertical = Size(100 - self.origin.y.value, UnitEnum.PERCENT)
+            diff_horizontal = Size(90 - self.origin.x.value, UnitEnum.PERCENT)
+            diff_vertical = Size(95 - self.origin.y.value, UnitEnum.PERCENT)
             if not self.extent:
                 # Extent is not set, use the calculated values
                 new_extent = Stretch(diff_horizontal, diff_vertical)
@@ -893,9 +860,9 @@ class Layout(object):
                 new_vertical = self.extent.vertical
                 # If extent is set but it's inconsistent, replace with
                 # calculated values
-                if bottom_right.x.value > 100:
+                if bottom_right.x.value > 90:
                     new_horizontal = diff_horizontal
-                if bottom_right.y.value > 100:
+                if bottom_right.y.value > 95:
                     new_vertical = diff_vertical
 
                 new_extent = Stretch(new_horizontal, new_vertical)

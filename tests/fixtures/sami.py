@@ -1,6 +1,9 @@
-# -*- coding: utf-8 -*-
+import pytest
 
-SAMPLE_SAMI = """
+
+@pytest.fixture(scope="session")
+def sample_sami():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
 <!--
 P { margin-left:  1pt;
@@ -49,7 +52,10 @@ P { margin-left:  1pt;
 </BODY></SAMI>
 """
 
-SAMPLE_SAMI_WITH_STYLE_TAGS = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_style_tags():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
 <!--
 P { margin-left:  1pt;
@@ -74,7 +80,10 @@ P { margin-left:  1pt;
 </BODY></SAMI>
 """
 
-SAMPLE_SAMI_WITH_CSS_INLINE_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_css_inline_style():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
 <!--
 P { margin-left:  1pt;
@@ -99,7 +108,10 @@ P { margin-left:  1pt;
 </BODY></SAMI>
 """
 
-SAMPLE_SAMI_WITH_CSS_ID_STYLE = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_css_id_style():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
 <!--
 P { margin-left:  1pt;
@@ -139,7 +151,10 @@ P { margin-left:  1pt;
 </BODY></SAMI>
 """
 
-SAMPLE_SAMI_EMPTY = """
+
+@pytest.fixture(scope="session")
+def sample_sami_empty():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
 <!--
 P { margin-left:  1pt;
@@ -160,7 +175,9 @@ P { margin-left:  1pt;
 """
 
 
-SAMPLE_SAMI_SYNTAX_ERROR = """
+@pytest.fixture(scope="session")
+def sample_sami_syntax_error():
+    return """
 <SAMI>
 <Head>
 <title>ir2014_111</title>
@@ -199,7 +216,10 @@ SAMPLE_SAMI_SYNTAX_ERROR = """
 </SAMI>
 """
 
-SAMPLE_SAMI_DOUBLE_BR = """
+
+@pytest.fixture(scope="session")
+def sample_sami_double_br():
+    return """
 <SAMI><HEAD><TITLE>NOVA3213</TITLE>
 </HEAD><BODY>
 <SYNC start="14848"><P class="ENCC">
@@ -209,7 +229,10 @@ SAMPLE_SAMI_DOUBLE_BR = """
 </BODY></SAMI>
 """
 
-SAMPLE_SAMI_PARTIAL_MARGINS = """
+
+@pytest.fixture(scope="session")
+def sample_sami_partial_margins():
+    return """
 <SAMI>
 <HEAD>
    <STYLE TYPE="Text/css">
@@ -226,7 +249,10 @@ SAMPLE_SAMI_PARTIAL_MARGINS = """
 </SAMI>
 """
 
-SAMPLE_SAMI_PARTIAL_MARGINS_RELATIVIZED = """<sami>
+
+@pytest.fixture(scope="session")
+def sample_sami_partial_margins_relativized():
+    return """<sami>
  <head>
   <style type="text/css">
    <!--
@@ -265,7 +291,10 @@ SAMPLE_SAMI_PARTIAL_MARGINS_RELATIVIZED = """<sami>
  </body>
 </sami>"""
 
-SAMPLE_SAMI_LANG_MARGIN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_lang_margin():
+    return """
 <SAMI>
 <HEAD>
    <STYLE TYPE="Text/css">
@@ -282,13 +311,16 @@ SAMPLE_SAMI_LANG_MARGIN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_SPAN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_span():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -302,13 +334,16 @@ SAMPLE_SAMI_WITH_SPAN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_BAD_SPAN_ALIGN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_bad_span_align():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -322,13 +357,16 @@ SAMPLE_SAMI_WITH_BAD_SPAN_ALIGN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_BAD_DIV_ALIGN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_bad_div_align():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -342,13 +380,16 @@ SAMPLE_SAMI_WITH_BAD_DIV_ALIGN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_P_ALIGN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_p_align():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -362,13 +403,16 @@ SAMPLE_SAMI_WITH_P_ALIGN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_P_AND_SPAN_ALIGN = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_p_and_span_align():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -382,13 +426,16 @@ SAMPLE_SAMI_WITH_P_AND_SPAN_ALIGN = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_MULTIPLE_SPAN_ALIGNS = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_multiple_span_aligns():
+    return """
 <SAMI>
 <HEAD>
     <STYLE TYPE="Text/css">
     <!--
         P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
-        .SUBTTL {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
     -->
     </STYLE>
 </HEAD>
@@ -404,7 +451,10 @@ SAMPLE_SAMI_WITH_MULTIPLE_SPAN_ALIGNS = """
 </SAMI>
 """
 
-SAMPLE_SAMI_NO_LANG = """
+
+@pytest.fixture(scope="session")
+def sample_sami_no_lang():
+    return """
 <SAMI>
 <Head><STYLE TYPE="text/css"></Style></Head>
 <BODY>
@@ -414,7 +464,10 @@ SAMPLE_SAMI_NO_LANG = """
 </SAMI>
 """
 
-SAMPLE_SAMI_WITH_LANG = """
+
+@pytest.fixture(scope="session")
+def sample_sami_with_lang():
+    return """
 <sami>
 <head>
 <style type="text/css"><!--.en-US {lang: en-US;}--></style>
@@ -424,3 +477,245 @@ SAMPLE_SAMI_WITH_LANG = """
 </body>
 </sami>
 """
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_multi_lang():
+    return """
+<sami>
+<head>
+<style type="text/css"><!--.en-US {lang: en-US;} .de-DE {lang: de-DE;}--></style>
+</head>
+<body>
+<sync start="14848">
+    <p class="en-US">Butterfly.</p>
+    <p class="de-DE">Schmetterling.</p>
+</sync>
+</body>
+</sami>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_multiple_p():
+    return """
+<SAMI>
+<HEAD>
+    <STYLE TYPE="Text/css">
+    <!--
+        P {font-size: 24pt; text-align: center; font-family: Tahoma; font-weight: bold; color: #FFFFFF; background-color: #000000;}
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+    -->
+    </STYLE>
+</HEAD>
+<BODY>
+    <SYNC start="133">
+        <P class="ENCC" Style="text-align:right;">
+            1st paragraph.
+        </P>
+        <P class="ENCC" Style="text-align:left;">
+           2nd paragraph.
+        </P>
+    </SYNC>
+    <SYNC start="1337">
+        <P class="ENCC" Style="text-align:right;">
+            3rd paragraph.
+        </P>
+    </SYNC>
+</BODY>
+</SAMI>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_empty_cue_output():
+    return """
+<sami>
+ <head>
+  <style type="text/css">
+   <!--
+    .en-US {
+     lang: en-US;
+    }
+   -->
+  </style>
+ </head>
+ <body>
+  <sync start="1209">
+   <p class="en-US">
+    abc
+   </p>
+  </sync>
+ </body>
+</sami>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_invalid_inline_style():
+    return """
+<SAMI><HEAD>
+    <STYLE TYPE="text/css">
+    <!--
+        .ENCC {Name: 'Subtitles'; Lang: en-US; SAMIType: CC; margin-top: 20px; margin-right: 20px; margin-bottom: 20px; margin-left: 20px;}
+    -->
+    </STYLE></HEAD>
+<BODY>
+    <SYNC start="133">
+        <P class="ENCC" Style="text-align:right:font-style:italic">
+            Some say we have this vision of Einstein as an old, wrinkly man
+        </P>
+    </SYNC>
+</BODY></SAMI>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_including_hexadecimal_charref():
+    return """
+<SAMI><HEAD><STYLE TYPE="text/css">
+<!--
+.ENCC {Name: English; lang: en-US; SAMI_Type: CC;}
+--></STYLE></HEAD><BODY>
+<SYNC start="101"><P class="ENCC">&#x3E; &#x3E;</P></SYNC>
+</BODY></SAMI>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_including_decimal_charref():
+    return """
+<SAMI><HEAD><STYLE TYPE="text/css">
+<!--
+.ENCC {Name: English; lang: en-US; SAMI_Type: CC;}
+--></STYLE></HEAD><BODY>
+<SYNC start="101"><P class="ENCC">&#62; &#62;</P></SYNC>
+</BODY></SAMI>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_including_html5_entityref():
+    return """
+<SAMI><HEAD><STYLE TYPE="text/css">
+<!--
+.ENCC {Name: English; lang: en-US; SAMI_Type: CC;}
+--></STYLE></HEAD><BODY>
+<SYNC start="1301"><P class="ENCC">&starf;_&starf;</P></SYNC>
+</BODY></SAMI>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_unclosed_tag():
+    return """
+<SAMI><HEAD><STYLE TYPE="text/css">
+<!--
+.ENCC {Name: English; lang: en-US; SAMI_Type: CC;}
+--></STYLE></HEAD><BODY>
+<SYNC start="1101"><P class="ENCC">.</P></SYNC>
+</BODY>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_inline_lang():
+    return """
+<SAMI><HEAD></HEAD><BODY>
+<SYNC start="1201"><P lang="en-US">Inlined.</P></SYNC>
+</BODY></SAMI>
+"""
+
+
+# we do not seem to support nested spans, update this if fixed.
+@pytest.fixture(scope="session")
+def sample_sami_from_dfxp_with_nested_spans():
+    return """<sami>
+ <head>
+  <style type="text/css">
+   <!--
+    .s1 {
+     font-style: italic;
+    }
+    .s2 {
+     font-weight: bold;
+    }
+    .s3 {
+     text-decoration: underline;
+    }
+    .en-US {
+     lang: en-US;
+    }
+   -->
+  </style>
+ </head>
+ <body>
+  <sync start="3209">
+   <p class="en-US">
+    That is  <span class="s3" style="classes:['s3'];class:s3;"></span> <span class="s2" style="classes:['s2'];class:s2;"></span> <span class="s1" style="classes:['s1'];class:s1;">nested</span> .
+   </p>
+  </sync>
+ </body>
+</sami>"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_with_separate_multi_lang():
+    return """<sami>
+ <head>
+  <style type="text/css">
+   <!--
+    .en-UK {
+     lang: en-UK;
+    }
+    .en-US {
+     lang: en-US;
+    }
+   -->
+  </style>
+ </head>
+ <body>
+  <sync start="1209">
+   <p class="en-UK">
+    British text.
+   </p>
+  </sync>
+  <sync start="3209">
+   <p class="en-US">
+    English text.
+   </p>
+  </sync>
+  <sync start="7209">
+   <p class="en-UK">
+    OTHER British text.
+   </p>
+  </sync>
+ </body>
+</sami>
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_sami_missing_start():
+    return """
+    <SAMI><HEAD><TITLE>NOVA3213</TITLE><STYLE TYPE="text/css">
+    <!--
+    P { margin-left:  1pt;
+        margin-right: 1pt;
+        margin-bottom: 2pt;
+        margin-top: 2pt;
+        text-align: center;
+        font-size: 10pt;
+        font-family: Arial;
+        font-weight: normal;
+        font-style: normal;
+        color: #ffeedd; }
+
+    .ENCC {Name: English; lang: en-US; SAMI_Type: CC;}
+
+    --></STYLE></HEAD><BODY>
+    <SYNC><P class="ENCC">
+           ( clock ticking )
+    </P></SYNC>
+    </BODY></SAMI>
+    """

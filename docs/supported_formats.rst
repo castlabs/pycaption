@@ -51,6 +51,23 @@ specification is currently (as of February 2015) in draft stage and
 therefore not all features are implemented by major players, the same
 being true for ``pycaption``.
 
+By default, the reader assumes the language is English and the writer
+returns the first language it finds in the caption set. You can specify
+a language using the ``lang`` parameter:
+
+::
+
+    pycaps = WebVTTReader().read(content, lang='fr')
+
+If you need to adjust all timestamps in a WebVTT, you can use the
+``time_shift_milliseconds`` parameter which moves the timestamps
+forward (positive integer) or backward (negative integer) with
+the specified amount:
+
+::
+
+    pycaps = WebVTTReader(time_shift_milliseconds=1154).read(content)
+
 Styling
 ^^^^^^^
 
@@ -130,6 +147,15 @@ video:
 
 The SCC Reader handles both dropframe and non-dropframe captions, and
 will auto-detect which format the captions are in.
+
+For debugging purposes, the SCC captions can be translated into a human readable
+form as following:
+::
+
+    translated_scc = translate_scc(scc_content, brackets="[]")
+
+Square brackets are used by default, but they can be replaced with other
+brackets or None.
 
 Transcript Writer
 -----------------

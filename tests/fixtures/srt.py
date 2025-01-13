@@ -1,6 +1,9 @@
-# -*- coding: utf-8 -*-
+import pytest
 
-SAMPLE_SRT = """1
+
+@pytest.fixture(scope="session")
+def sample_srt():
+    return """1
 00:00:09,209 --> 00:00:12,312
 ( clock ticking )
 
@@ -35,7 +38,10 @@ It's all about an eternal Einstein.
 <LAUGHING & WHOOPS!>
 """
 
-SAMPLE_SRT_ASCII = """1
+
+@pytest.fixture(scope="session")
+def sample_srt_ascii():
+    return """1
 00:00:09,209 --> 00:00:12,312
 ( clock ticking )
 
@@ -74,7 +80,10 @@ It's all about an eternal Einstein.
 some more text
 """
 
-SAMPLE_SRT_NUMERIC = """35
+
+@pytest.fixture(scope="session")
+def sample_srt_numeric():
+    return """35
 00:00:32,290 --> 00:00:32,890
 TO  FIND  HIM.            IF
 
@@ -104,10 +113,15 @@ STD  OUT
 """
 
 
-SAMPLE_SRT_EMPTY = """
+@pytest.fixture(scope="session")
+def sample_srt_empty():
+    return """
 """
 
-SAMPLE_SRT_BLANK_LINES = """35
+
+@pytest.fixture(scope="session")
+def sample_srt_blank_lines():
+    return """35
 00:00:32,290 --> 00:00:32,890
 
 
@@ -117,7 +131,10 @@ YOU  HAVE  ANY  INFORMATION
 
 """
 
-SAMPLE_SRT_TRAILING_BLANKS = """35
+
+@pytest.fixture(scope="session")
+def sample_srt_trailing_blanks():
+    return """35
 00:00:32,290 --> 00:00:32,890
 HELP  I  SAY
 
@@ -129,7 +146,77 @@ YOU  HAVE  ANY  INFORMATION
 
 
 """
-SRT_ARABIC = """\
+
+
+@pytest.fixture(scope="session")
+def samples_srt_same_time():
+    return """\
+1
+00:00:05,213 --> 00:00:10,552
+SO NO ONE TOLD YOU
+
+2
+00:00:05,213 --> 00:00:10,552
+LIFE WAS GONNA BE THIS WAY
+
+3
+00:00:10,566 --> 00:00:10,580
+YOUR JOB IS A JOKE, YOUR ARE BROKE
+
+4
+00:00:10,594 --> 00:00:10,600
+IT IS LIKE YOU ARE ALWAYS STUCK
+
+5
+00:00:10,594 --> 00:00:10,600
+IN A SECOND GEAR
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_srt_empty_cue_output():
+    return """\
+1
+00:00:01,209 --> 00:00:02,312
+abc
+"""
+
+
+@pytest.fixture(scope="session")
+def sample_srt_timestamps_without_microseconds():
+    return """\
+1
+00:00:13 --> 00:00:16
+Guard this envelope.
+If anything happens
+to me
+
+2
+00:00:16 --> 00:00:18
+see that it reaches
+the hands of Mr
+Sherlock Holmes
+"""
+
+@pytest.fixture(scope="session")
+def sample_srt_timestamps_without_microseconds2():
+    return """\
+1
+00:00:13 --> 00:00:16
+Guard this envelope.
+If anything happens
+to me
+
+2
+00:00:16 --> 00:00:18
+see that it reaches
+the hands of Mr
+Sherlock Holmes
+"""
+
+@pytest.fixture(scope="session")
+def sample_srt_arabic():
+     return  """\
 1
 00:00:40,000 --> 00:00:43,250
 ‫‎انها‎ ‎مرحلة‎ ‎سوداء،‬

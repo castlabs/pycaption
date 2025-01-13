@@ -1,0 +1,79 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_call:
+    secrets:
+      SLACK_BOT_TOKEN:
+        required: true
+      SLACK_CHANNEL_ID:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["py38", "py39", "py310", "py311", "py312"]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Run Test
+        id: tests
+        run: |
+          ./run_tests.sh test_${{ matrix.python-version }} 
+        continue-on-error: true
+
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report-${{ matrix.python-version }}
+          path: junit.xml
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-report-${{ matrix.python-version }}
+          path: coverage.xml
+
+      - name: Add context info to env
+        run: |
+          sudo apt-get install -y --no-install-recommends libxml-xpath-perl
+          COVERAGE=`xpath -q -e "floor(/coverage/@line-rate * 100)" coverage.xml`
+          FAILED_AMOUNT=`xpath -q -e "number(/testsuites/testsuite/@failures)" junit.xml`
+          SKIPPED_AMOUNT=`xpath -q -e "number(/testsuites/testsuite/@skipped)" junit.xml`
+          PASSED_AMOUNT=`xpath -q -e "/testsuites/testsuite/@tests - $SKIPPED_AMOUNT - $FAILED_AMOUNT" junit.xml`
+          echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
+          echo "FAILED_AMOUNT=$FAILED_AMOUNT" >> $GITHUB_ENV
+          echo "PASSED_AMOUNT=$PASSED_AMOUNT" >> $GITHUB_ENV
+          ${{ contains(github.ref, 'tags/') }} \
+            && BRANCH='refs/heads/main' \
+            || BRANCH=${{ github.head_ref || github.ref }}
+          echo "BRANCH=${BRANCH#refs/*/}" >> $GITHUB_ENV
+
+      - name: Notify if test FAILED
+        uses: archive/github-actions-slack@v2.0.0
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-text: ":boom: *${{ env.FAILED_AMOUNT }}* Pycaption test(s) failed for Python *${{ matrix.python-version }}* on the *${{ env.BRANCH }}* branch (triggered by *${{ github.actor }}*)"
+        if: steps.tests.outcome == 'failure' && !github.event.pull_request.head.repo.fork
+
+      - name: Mark test failure
+        run: exit 1
+        if: steps.tests.outcome == 'failure'
+
+      - name: Slack notify tests PASSED
+        uses: archive/github-actions-slack@v2.0.0
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          slack-channel: ${{ secrets.SLACK_CHANNEL_ID }}
+          slack-text: ":rocket: All (*${{ env.PASSED_AMOUNT }}*) Pycaption tests passed for Python *${{ matrix.python-version }}* covering *${{ env.COVERAGE }}%* of code on the *${{ env.BRANCH }}* branch (triggered by *${{ github.actor }}*)"
+        if: steps.tests.outcome == 'success' && !github.event.pull_request.head.repo.fork

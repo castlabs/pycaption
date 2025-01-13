@@ -1,84 +1,137 @@
-import unittest
+import pytest
 
 from pycaption import DFXPReader, CaptionReadNoCaptions
-from pycaption.geometry import UnitEnum, HorizontalAlignmentEnum, VerticalAlignmentEnum
-from pycaption.exceptions import CaptionReadSyntaxError, InvalidInputError, CaptionReadError
-
-from tests.samples.dfxp import (
-    SAMPLE_DFXP, SAMPLE_DFXP_EMPTY, SAMPLE_DFXP_SYNTAX_ERROR,
-    DFXP_WITH_ALTERNATIVE_TIMING_FORMATS, SAMPLE_DFXP_EMPTY_PARAGRAPH
+from pycaption.exceptions import (
+    CaptionReadSyntaxError, CaptionReadError, CaptionReadTimingError,
 )
+from pycaption.geometry import (
+    UnitEnum, HorizontalAlignmentEnum, VerticalAlignmentEnum,
+)
+from tests.mixins import ReaderTestingMixIn
 
 
-class DFXPReaderTestCase(unittest.TestCase):
+class TestDFXPReader(ReaderTestingMixIn):
+    def setup_class(self):
+        self.reader = DFXPReader()
 
-    def test_detection(self):
-        self.assertTrue(DFXPReader().detect(SAMPLE_DFXP))
+    def test_positive_answer_for_detection(self, sample_dfxp):
+        super().assert_positive_answer_for_detection(sample_dfxp)
 
-    def test_caption_length(self):
-        captions = DFXPReader().read(SAMPLE_DFXP)
-        self.assertEqual(7, len(captions.get_captions("en-US")))
+    def test_negative_answer_for_microdvd(self, sample_microdvd):
+        super().assert_negative_answer_for_detection(sample_microdvd)
 
-    def test_proper_timestamps(self):
-        captions = DFXPReader().read(SAMPLE_DFXP)
+    def test_negative_answer_for_sami(self, sample_sami):
+        super().assert_negative_answer_for_detection(sample_sami)
+
+    def test_negative_answer_for_scc_on_pop_on(self, sample_scc_pop_on):
+        super().assert_negative_answer_for_detection(sample_scc_pop_on)
+
+    def test_negative_answer_for_srt(self, sample_srt):
+        super().assert_negative_answer_for_detection(sample_srt)
+
+    def test_negative_answer_for_webvtt(self, sample_webvtt):
+        super().assert_negative_answer_for_detection(sample_webvtt)
+
+    def test_caption_length(self, sample_dfxp):
+        captions = DFXPReader().read(sample_dfxp)
+
+        assert 7 == len(captions.get_captions("en-US"))
+
+    def test_proper_timestamps(self, sample_dfxp):
+        captions = DFXPReader().read(sample_dfxp)
         paragraph = captions.get_captions("en-US")[2]
 
-        self.assertEqual(17000000, paragraph.start)
-        self.assertEqual(18752000, paragraph.end)
+        assert 17000000 == paragraph.start
+        assert 18752000 == paragraph.end
 
-    def test_offset_time(self):
+    def test_incorrect_time_format(self, sample_dfxp_incorrect_time_format):
+        with pytest.raises(CaptionReadTimingError) as exc_info:
+            DFXPReader().read(sample_dfxp_incorrect_time_format)
+
+        assert exc_info.value.args[0].startswith("Invalid timestamp: 0:05.")
+
+    def test_missing_begin(self, sample_dfxp_missing_begin):
+        with pytest.raises(CaptionReadTimingError) as exc_info:
+            DFXPReader().read(sample_dfxp_missing_begin)
+        assert exc_info.value.args[0].startswith('Missing begin time on line ')
+
+    def test_missing_end_and_dur(self, sample_dfxp_missing_end_and_dur):
+        with pytest.raises(CaptionReadTimingError) as exc_info:
+            DFXPReader().read(sample_dfxp_missing_end_and_dur)
+        assert exc_info.value.args[0].startswith(
+            'Missing end time or duration on line ')
+
+    def test_convert_timestamp_to_microseconds(self):
         reader = DFXPReader()
-        self.assertEqual(1, reader._translate_time("0.001ms"))
-        self.assertEqual(2000, reader._translate_time("2ms"))
-        self.assertEqual(1000000, reader._translate_time("1s"))
-        self.assertEqual(1234567, reader._translate_time("1.234567s"))
-        self.assertEqual(180000000, reader._translate_time("3m"))
-        self.assertEqual(14400000000, reader._translate_time("4h"))
+
+        assert 1 == reader._convert_timestamp_to_microseconds("0.001ms")
+        assert 2000 == reader._convert_timestamp_to_microseconds("2ms")
+        assert 1000000 == reader._convert_timestamp_to_microseconds("1s")
+        assert 1234567 == reader._convert_timestamp_to_microseconds("1.234567s")
+        assert 180000000 == reader._convert_timestamp_to_microseconds("3m")
+        assert 14400000000 == reader._convert_timestamp_to_microseconds("4h")
+        assert 53333 == reader._convert_timestamp_to_microseconds("1.6f")
         # Tick values are not supported
-        self.assertRaises(
-            InvalidInputError, reader._translate_time, "2.3t")
+        with pytest.raises(NotImplementedError):
+            reader._convert_timestamp_to_microseconds("2.3t")
 
-    def test_empty_file(self):
-        self.assertRaises(
-            CaptionReadNoCaptions,
-            DFXPReader().read, SAMPLE_DFXP_EMPTY)
+    @pytest.mark.parametrize('timestamp, microseconds', [
+        ('12:23:34', 44614000000), ('23:34:45:56', 84886866666),
+        ('34:45:56.7', 125156700000), ('13:24:35.67', 48275670000),
+        ('24:35:46.456', 88546456000), ('1:23:34', 5014000000)])
+    def test_clock_time(self, timestamp, microseconds):
+        assert DFXPReader()._convert_timestamp_to_microseconds(
+            timestamp) == microseconds
 
-    def test_invalid_markup_is_properly_handled(self):
-        captions = DFXPReader().read(SAMPLE_DFXP_SYNTAX_ERROR)
-        self.assertEqual(2, len(captions.get_captions("en-US")))
+    @pytest.mark.parametrize('timestamp', [
+        '1:1:11', '1:11:1', '1:11:11:1', '11:11:11:11.11', '11:11:11,11',
+        '11.11.11.11', '11:11:11.', 'o1:11:11'])
+    def test_invalid_timestamp(self, timestamp):
+        with pytest.raises(CaptionReadTimingError) as exc_info:
+            DFXPReader()._convert_timestamp_to_microseconds(timestamp)
 
-    def test_caption_error_for_invalid_positioning_values(self):
+    def test_empty_file(self, sample_dfxp_empty):
+        with pytest.raises(CaptionReadNoCaptions):
+            DFXPReader().read(sample_dfxp_empty)
+
+    def test_invalid_markup_is_properly_handled(self, sample_dfxp_syntax_error):
+        captions = DFXPReader().read(sample_dfxp_syntax_error)
+
+        assert 2 == len(captions.get_captions("en"))
+
+    def test_caption_error_for_invalid_positioning_values(
+            self, sample_dfxp_invalid_positioning_value_template):
         invalid_value_dfxp = (
-            SAMPLE_DFXP_INVALID_POSITIONING_VALUE_TEMPLATE
-            .format(origin="px 5px")
+            sample_dfxp_invalid_positioning_value_template.
+                format(origin="px 5px")
         )
-        self.assertRaises(
-            CaptionReadSyntaxError, DFXPReader().read,
-            invalid_value_dfxp
-        )
+        with pytest.raises(CaptionReadSyntaxError):
+            DFXPReader().read(invalid_value_dfxp)
 
-    def test_caption_error_for_invalid_or_unsupported_positioning_units(self):
-        invalid_dfxp = (
-            SAMPLE_DFXP_INVALID_POSITIONING_VALUE_TEMPLATE
-            .format(origin="6foo 7bar")
+    def test_caption_error_for_invalid_or_unsupported_positioning_units(
+            self, sample_dfxp_invalid_positioning_value_template):
+        invalid_dfxp = sample_dfxp_invalid_positioning_value_template.format(
+            origin="6foo 7bar"
         )
-        self.assertRaises(
-            CaptionReadSyntaxError, DFXPReader().read,
-            invalid_dfxp
-        )
+        with pytest.raises(CaptionReadSyntaxError):
+            DFXPReader().read(invalid_dfxp)
 
-    def test_individual_timings_of_captions_with_matching_timespec_are_kept(self):  # noqa
+    def test_individual_timings_of_captions_with_matching_timespec_are_kept(
+            self, sample_dfxp_multiple_captions_with_the_same_timing
+    ):
         captionset = DFXPReader().read(
-            SAMPLE_DFXP_MULTIPLE_CAPTIONS_WITH_THE_SAME_TIMING
+            sample_dfxp_multiple_captions_with_the_same_timing
         )
         expected_timings = [(9209000, 12312000)] * 3
         actual_timings = [(c_.start, c_.end) for c_ in
                           captionset.get_captions('en-US')]
-        self.assertEqual(expected_timings, actual_timings)
 
-    def test_individual_texts_of_captions_with_matching_timespec_are_kept(self):  # noqa
+        assert expected_timings == actual_timings
+
+    def test_individual_texts_of_captions_with_matching_timespec_are_kept(
+            self, sample_dfxp_multiple_captions_with_the_same_timing):
         captionset = DFXPReader().read(
-            SAMPLE_DFXP_MULTIPLE_CAPTIONS_WITH_THE_SAME_TIMING
+            sample_dfxp_multiple_captions_with_the_same_timing
         )
 
         expected_texts = ['Some text here',
@@ -87,77 +140,58 @@ class DFXPReaderTestCase(unittest.TestCase):
         actual_texts = [c_.nodes[0].content for c_ in
                         captionset.get_captions("en-US")]
 
-        self.assertEqual(expected_texts, actual_texts)
+        assert expected_texts == actual_texts
 
-    def test_individual_layouts_of_captions_with_matching_timespec_are_kept(self):  # noqa
+    def test_individual_layouts_of_captions_with_matching_timespec_are_kept(
+            self, sample_dfxp_multiple_captions_with_the_same_timing
+    ):
         captionset = DFXPReader().read(
-            SAMPLE_DFXP_MULTIPLE_CAPTIONS_WITH_THE_SAME_TIMING
+            sample_dfxp_multiple_captions_with_the_same_timing
         )
         expected_layouts = [
-            (((10, UnitEnum.PERCENT), (10, UnitEnum.PERCENT)), None, None, (HorizontalAlignmentEnum.CENTER, VerticalAlignmentEnum.BOTTOM)),
-            (((40, UnitEnum.PERCENT), (40, UnitEnum.PERCENT)), None, None, (HorizontalAlignmentEnum.CENTER, VerticalAlignmentEnum.BOTTOM)),
-            (((10, UnitEnum.PERCENT), (70, UnitEnum.PERCENT)), None, None, (HorizontalAlignmentEnum.CENTER, VerticalAlignmentEnum.BOTTOM))]
+            (((10, UnitEnum.PERCENT), (10, UnitEnum.PERCENT)), None, None,
+             (HorizontalAlignmentEnum.START, VerticalAlignmentEnum.BOTTOM)),
+            (((40, UnitEnum.PERCENT), (40, UnitEnum.PERCENT)), None, None,
+             (HorizontalAlignmentEnum.START, VerticalAlignmentEnum.BOTTOM)),
+            (((10, UnitEnum.PERCENT), (70, UnitEnum.PERCENT)), None, None,
+             (HorizontalAlignmentEnum.START, VerticalAlignmentEnum.BOTTOM))]
         actual_layouts = [c_.layout_info.serialized() for c_ in
                           captionset.get_captions('en-US')]
 
-        self.assertEqual(expected_layouts, actual_layouts)
+        assert expected_layouts == actual_layouts
 
-    def test_properly_converts_timing(self):
+    def test_properly_converts_timing(
+            self, sample_dfxp_with_alternative_timing_formats):
         caption_set = DFXPReader().read(
-            DFXP_WITH_ALTERNATIVE_TIMING_FORMATS)
+            sample_dfxp_with_alternative_timing_formats)
         caps = caption_set.get_captions('en-US')
-        self.assertEqual(caps[0].start, 1900000)
-        self.assertEqual(caps[0].end, 3050000)
-        self.assertEqual(caps[1].start, 4000000)
-        self.assertEqual(caps[1].end, 5200000)
 
-    def test_empty_paragraph(self):
+        assert caps[0].start == 1900000
+        assert caps[0].end == 3050000
+        assert caps[1].start == 4000000
+        assert caps[1].end == 5200000
+
+    def test_empty_paragraph(self, sample_dfxp_empty_paragraph):
         try:
-            DFXPReader().read(SAMPLE_DFXP_EMPTY_PARAGRAPH)
+            DFXPReader().read(sample_dfxp_empty_paragraph)
         except CaptionReadError:
-            self.fail("Failing on empty paragraph")
+            pytest.fail("Failing on empty paragraph")
 
+    def test_only_spaces_paragraph(self, sample_dfxp_only_spaces_paragraph):
+        caption_set = DFXPReader().read(sample_dfxp_only_spaces_paragraph)
+        caps = caption_set.get_captions('en-US')
 
-SAMPLE_DFXP_INVALID_POSITIONING_VALUE_TEMPLATE = """\
-<?xml version="1.0" encoding="utf-8"?>
-<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
- <head>
-  <layout>
-   <region tts:origin="{origin}" xml:id="bottom"/>
-  </layout>
- </head>
- <body>
-  <div region="bottom" xml:lang="en-US">
-   <p begin="00:00:09.209" end="00:00:12.312" region="bottom">
-    ( clock ticking )
-   </p>
-  </div>
- </body>
-</tt>"""
+        assert len(caps) == 1
 
-# TODO - notice that there's no "bottom" region specified in the <layout>
-# region, but it's referenced by the <div>. Decide if this is ok enough
-SAMPLE_DFXP_MULTIPLE_CAPTIONS_WITH_THE_SAME_TIMING = """\
-<?xml version="1.0" encoding="utf-8"?>
-<tt xml:lang="en" xmlns="http://www.w3.org/ns/ttml" xmlns:tts="http://www.w3.org/ns/ttml#styling">
- <head>
-  <layout>
-   <region tts:origin="10% 10%" xml:id="b1"/>
-   <region tts:origin="40% 40%" xml:id="b2"/>
-   <region tts:origin="10% 70%" xml:id="b3"/>
-  </layout>
- </head>
- <body>
-  <div region="bottom" xml:lang="en-US">
-   <p begin="00:00:09.209" end="00:00:12.312" region="b1">
-    Some text here
-   </p>
-   <p begin="00:00:09.209" end="00:00:12.312" region="b2">
-    Some text there
-   </p>
-   <p begin="00:00:09.209" end="00:00:12.312" region="b3">
-    Caption texts are everywhere!
-   </p>
-  </div>
- </body>
-</tt>"""
+    def test_properly_converts_frametiming(self, sample_dfxp_with_frame_timing):
+        caption_set = DFXPReader().read(sample_dfxp_with_frame_timing)
+        caps = caption_set.get_captions('en-US')
+
+        assert caps[0].end == 12233333
+        assert caps[0].start == 9666666
+
+    def test_empty_cue(self, sample_dfxp_empty_cue):
+        caption_set = DFXPReader().read(sample_dfxp_empty_cue)
+        caps = caption_set.get_captions('en-US')
+
+        assert len(caps) == 1
