@@ -266,11 +266,7 @@ class ScenaristDVDWriter(BaseWriter):
         if missing_glyphs:
             raise ValueError(f'Selected font was missing glyphs: {" ".join(missing_glyphs.keys())}')
 
-        font_size = 30
-        if self.video_width < 500:
-            font_size = 16
-
-        print(font_size)
+        font_size = int(self.video_width * 0.05 * 0.6) # rough estimate but should work
 
         fnt = ImageFont.truetype(fnt, font_size)
 
@@ -321,7 +317,7 @@ class ScenaristDVDWriter(BaseWriter):
         return str_value
 
     def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom', align: str = 'left'):
-        for caption in caption_list:
+        for caption in caption_list[::-1]:
             text = caption.get_text()
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
 

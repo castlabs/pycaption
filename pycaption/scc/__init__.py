@@ -81,7 +81,7 @@ http://www.theneitherworld.com/mcpoodle/SCC_TOOLS/DOCS/SCC_FORMAT.HTML
 import math
 import re
 import textwrap
-from collections import defaultdict, deque
+from collections import defaultdict, deque, OrderedDict
 from copy import deepcopy
 
 from pycaption.base import BaseReader, BaseWriter, CaptionNode, CaptionSet
@@ -198,6 +198,31 @@ class SCCReader(BaseReader):
 
         self.time = 0
 
+    def _group_captions_by_start_time(self, caps):
+        # group captions that have the same start time
+        caps_start_time = OrderedDict()
+        for i, cap in enumerate(caps):
+            if cap.start not in caps_start_time:
+                caps_start_time[cap.start] = [cap]
+            else:
+                caps_start_time[cap.start].append(cap)
+        # order by start timestamp
+        caps_start_time = OrderedDict(sorted(caps_start_time.items(), key=lambda item: item[0]))
+
+        # check if captions with the same start time also have the same end time
+        # fail if different end times are found - this is not (yet?) supported
+        caps_final = []
+        for start_time, caps_list in caps_start_time.items():
+            if len(caps_list) == 1:
+                caps_final.append(caps_list)
+            else:
+                end_times = list(set([c.end for c in caps_list]))
+                if len(end_times) != 1:
+                    raise ValueError("Unsupported subtitles - overlapping subtitles with different end times found")
+                else:
+                    caps_final.append(caps_list)
+        return caps_final
+
     def detect(self, content):
         """Checks whether the given content is a proper SCC file
 
@@ -211,7 +236,7 @@ class SCCReader(BaseReader):
         else:
             return False
 
-    def read(self, content, lang="en-US", simulate_roll_up=False, offset=0):
+    def read(self, content, lang="en-US", simulate_roll_up=False, offset=0, merge_captions=False):
         """Converts the unicode string into a CaptionSet
 
         :type content: str
@@ -227,6 +252,11 @@ class SCCReader(BaseReader):
 
         :type offset: int
         :param offset:
+
+        :type merge_captions: bool
+        :param merge_captions: If True, we will merge captions that have the same
+            start and end time. We do this by merging their nodes together, separating
+            them with a line break.
 
         :rtype: CaptionSet
         """
@@ -244,7 +274,21 @@ class SCCReader(BaseReader):
 
         self._flush_implicit_buffers(self.buffer_dict.active_key)
 
-        captions = CaptionSet({lang: self.caption_stash.get_all()})
+        captions_raw = self.caption_stash.get_all()
+        if merge_captions:
+            _captions_by_start = self._group_captions_by_start_time(captions_raw)
+
+            all_captions_with_same_time = [l for l in _captions_by_start if len(l) > 1]
+            for current_captions_with_same_time in all_captions_with_same_time:
+                nodes_to_append = [CaptionNode(CaptionNode.BREAK)]
+                for dupe_caption in current_captions_with_same_time[1:]:
+                    nodes_to_append.extend(dupe_caption.nodes)
+                    nodes_to_append.append(CaptionNode(CaptionNode.BREAK))
+                    captions_raw.remove(dupe_caption)
+
+                current_captions_with_same_time[0].nodes.extend(nodes_to_append)
+
+        captions = CaptionSet({lang: captions_raw})
 
         # check captions for incorrect lengths
         lines_too_long = defaultdict(list)
