@@ -317,6 +317,9 @@ class ScenaristDVDWriter(BaseWriter):
         return str_value
 
     def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom', align: str = 'left'):
+        ascender, descender = fnt.getmetrics()
+        line_spacing = ascender + abs(descender)  # Basic line height without extra padding
+        lines_written = 0
         for caption in caption_list[::-1]:
             text = caption.get_text()
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
@@ -354,9 +357,9 @@ class ScenaristDVDWriter(BaseWriter):
             if position != 'source':
                 x = self.video_width / 2 - r / 2
                 if position == 'bottom':
-                    y = self.video_height - b - 10  # padding for readability
+                    y = self.video_height - b - 10 - lines_written * line_spacing  # padding for readability
                 elif position == 'top':
-                    y = 10
+                    y = 10 + lines_written * line_spacing
                 else:
                     raise ValueError('Unknown "position": {}'.format(position))
 
@@ -381,3 +384,4 @@ class ScenaristDVDWriter(BaseWriter):
                 draw.text((x + adj, y - adj), text, font=fnt, fill=borderColor, align=align)
 
             draw.text((x, y), text, font=fnt, fill=fontColor, align=align)
+            lines_written += 1
