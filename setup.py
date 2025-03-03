@@ -12,12 +12,10 @@ dependencies = [
     "beautifulsoup4>=4.12.1",
     "lxml>=4.9.1",
     "cssutils>=2.0.0",
-    "Pillow>=7.0.0",
-    "fonttools~=4.33.3",
-    "langcodes~=3.3.0",
-    "arabic-reshaper==3.0.0",
-    "python-bidi==0.4.2",
-    "striprtf==0.0.28"
+    "Pillow~=11.1.0",
+    "fonttools~=4.56.0",
+    "langcodes~=3.5.0",
+    "striprtf~=0.0.28"
 ]
 
 dev_dependencies = ["pytest", "pytest-lazy-fixture"]

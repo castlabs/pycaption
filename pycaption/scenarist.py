@@ -6,8 +6,6 @@ from datetime import timedelta
 from io import BytesIO
 
 from PIL import Image, ImageFont, ImageDraw
-import arabic_reshaper
-from bidi.algorithm import get_display
 from fontTools.ttLib import TTFont
 from langcodes import Language, tag_distance
 
