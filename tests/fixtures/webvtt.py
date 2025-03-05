@@ -1,5 +1,41 @@
 import pytest
 
+@pytest.fixture(scope="session")
+def sample_srt_top():
+    return """1
+00:00:09,209 --> 00:00:12,312 X1:262 X2:458 Y1:020 Y2:051
+( clock ticking )
+
+2
+00:00:14,848 --> 00:00:17,000 X1:233 X2:487 Y1:021 Y2:125
+MAN: 
+When we think 
+♪ ...say bow, wow, ♪
+
+3
+00:00:17,000 --> 00:00:18,752 X1:162 X2:558 Y1:020 Y2:044
+we have this vision of Einstein
+
+4
+00:00:18,752 --> 00:00:20,887 X1:208 X2:512 Y1:020 Y2:081
+as an old, wrinkly man 
+with white hair.
+
+5
+00:00:20,887 --> 00:00:26,760 X1:190 X2:530 Y1:021 Y2:118
+MAN 2: 
+E equals m c-squared is 
+not about an old Einstein.
+
+6
+00:00:26,760 --> 00:00:32,200 X1:147 X2:573 Y1:021 Y2:081
+MAN 2: 
+It's all about an eternal Einstein.
+
+7
+00:00:32,200 --> 00:00:36,200 X1:187 X2:533 Y1:021 Y2:044
+<LAUGHING & WHOOPS!>
+"""
 
 @pytest.fixture(scope="session")
 def sample_webvtt():
