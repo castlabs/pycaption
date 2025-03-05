@@ -81,7 +81,7 @@ from tests.fixtures.srt import (  # noqa: F401
     sample_srt_blank_lines, sample_srt_trailing_blanks,
     samples_srt_same_time, sample_srt_empty_cue_output,
     sample_srt_timestamps_without_microseconds,
-    sample_srt_arabic
+    sample_srt_arabic,
 )
 from tests.fixtures.translated_scc import (  # noqa: F401
     sample_translated_scc_custom_brackets, sample_translated_scc_success,
@@ -101,5 +101,6 @@ from tests.fixtures.webvtt import (  # noqa: F401
     sample_webvtt_from_scc_properly_writes_newlines_output,
     sample_webvtt_last_cue_zero_start, sample_webvtt_empty_cue,
     sample_webvtt_multi_lang_en, sample_webvtt_multi_lang_de,
-    sample_webvtt_empty_cue_output, sample_webvtt_timestamps
+    sample_webvtt_empty_cue_output, sample_webvtt_timestamps,
+    sample_srt_top
 )
