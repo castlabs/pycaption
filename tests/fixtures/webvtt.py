@@ -245,6 +245,45 @@ It's all about an eternal Einstein.
 &lt;LAUGHING &amp; WHOOPS!>
 """
 
+@pytest.fixture(scope="session")
+def sample_webvtt_from_srt_with_sequence():
+    return """WEBVTT
+
+1
+00:09.209 --> 00:12.312
+( clock ticking )
+
+2
+00:14.848 --> 00:17.000
+MAN:
+When we think
+♪ ...say bow, wow, ♪
+
+3
+00:17.000 --> 00:18.752
+we have this vision of Einstein
+
+4
+00:18.752 --> 00:20.887
+as an old, wrinkly man
+with white hair.
+
+5
+00:20.887 --> 00:26.760
+MAN 2:
+E equals m c-squared is
+not about an old Einstein.
+
+6
+00:26.760 --> 00:32.200
+MAN 2:
+It's all about an eternal Einstein.
+
+7
+00:32.200 --> 00:36.200
+&lt;LAUGHING &amp; WHOOPS!>
+"""
+
 
 # This is not equal to the input because we accept unescaped illegal characters
 # when reading (because many players do so) but escape them when writing

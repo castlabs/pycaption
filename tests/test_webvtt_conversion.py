@@ -59,6 +59,15 @@ class TestSRTtoWebVTT(WebVTTTestingMixIn):
         self.assert_webvtt_equals(sample_webvtt_from_srt, results)
 
 
+class TestSRTtoWebVTTWithSequence(WebVTTTestingMixIn):
+    def test_srt_to_webvtt_with_sequence_conversion(self, sample_webvtt_from_srt_with_sequence, sample_srt):
+        caption_set = SRTReader().read(sample_srt)
+        results = WebVTTWriter().write(caption_set, include_sequence_numbers=True)
+
+        assert isinstance(results, str)
+        self.assert_webvtt_equals(sample_webvtt_from_srt_with_sequence, results)
+
+
 class TestWebVTTtoWebVTT(WebVTTTestingMixIn):
     def test_webvtt_to_webvtt_conversion(self, sample_webvtt_from_webvtt,
                                          sample_webvtt):

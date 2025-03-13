@@ -197,7 +197,7 @@ class WebVTTWriter(BaseWriter):
     video_width = None
     video_height = None
 
-    def write(self, caption_set, lang=None, force_hours=False):
+    def write(self, caption_set, lang=None, force_hours=False, include_sequence_numbers=False):
         """
         :type caption_set: CaptionSet
         @param force_hours: force writing timestamps in full (hh:mm:ss.xxx) even when "hour" is 0
@@ -220,10 +220,15 @@ class WebVTTWriter(BaseWriter):
         self.global_layout = caption_set.get_layout_info(lang)
 
         captions = caption_set.get_captions(lang)
+        captions_out = []
+        count = 1 if include_sequence_numbers else None
+        for caption in captions:
+            converted_caption = self._convert_caption(caption_set, caption, force_hours, count=count)
+            captions_out.append(converted_caption)
+            if count is not None:
+                count += 1
 
-        return output + "\n".join(
-            [self._convert_caption(caption_set, caption, force_hours) for caption in captions]
-        )
+        return output + "\n".join(captions_out)
 
     def _timestamp(self, ts, force_hours):
         td = datetime.timedelta(microseconds=ts)
@@ -265,7 +270,7 @@ class WebVTTWriter(BaseWriter):
 
         return resulting_style
 
-    def _convert_caption(self, caption_set, caption, force_hours):
+    def _convert_caption(self, caption_set, caption, force_hours, count=None):
         """
         :type caption: Caption
         """
@@ -291,6 +296,8 @@ class WebVTTWriter(BaseWriter):
             if not layout:
                 layout = caption.layout_info or self.global_layout
             cue_settings = self._convert_positioning(layout)
+            if count is not None:
+                output += f"{count}\n"
             output += timespan + cue_settings + "\n"
             output += cue_style_tags[0] + cue_text + cue_style_tags[1] + "\n"
 
