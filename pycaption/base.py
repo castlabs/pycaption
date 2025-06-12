@@ -1,4 +1,5 @@
 import os
+import re
 from collections import defaultdict
 from datetime import timedelta
 from numbers import Number
@@ -306,6 +307,9 @@ class CaptionSet:
     by all the children.
     """
 
+    RE_HTML_STRIP = re.compile(r"<[^>]+>")
+    RE_ASS_STRIP = re.compile(r"{[^}]+}")
+
     def __init__(self, captions, styles={}, layout_info=None):
         """
         :param captions: A dictionary of the format {'language': CaptionList}
@@ -374,6 +378,40 @@ class CaptionSet:
                 caption.start = caption.start * rate_skew + offset
                 caption.end = caption.end * rate_skew + offset
                 if caption.start >= 0:
+                    out_captions.append(caption)
+            self.set_captions(lang, out_captions)
+
+    def strip_html_tags(self):
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            out_captions = CaptionList()
+            for caption in captions:
+                for node in caption.nodes:
+                    if node.type_ == CaptionNode.TEXT:
+                        node.content = self.RE_HTML_STRIP.sub("", node.content)
+                out_captions.append(caption)
+            self.set_captions(lang, out_captions)
+
+    def strip_ass_tags(self):
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            out_captions = CaptionList()
+            for caption in captions:
+                for node in caption.nodes:
+                    if node.type_ == CaptionNode.TEXT:
+                        node.content = self.RE_ASS_STRIP.sub("", node.content)
+                out_captions.append(caption)
+            self.set_captions(lang, out_captions)
+
+    def remove_empty_captions(self):
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            out_captions = CaptionList()
+            for caption in captions:
+                valid_text_nodes = [
+                    node for node in caption.nodes if node.type_ == CaptionNode.TEXT and node.content.strip()
+                ]
+                if valid_text_nodes:
                     out_captions.append(caption)
             self.set_captions(lang, out_captions)
 
