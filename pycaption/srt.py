@@ -8,7 +8,9 @@ from .exceptions import CaptionReadNoCaptions, InvalidInputError
 
 import re
 from PIL import Image, ImageFont, ImageDraw
+import warnings
 
+warnings.simplefilter('once', DeprecationWarning)
 
 class SRTReader(BaseReader):
     RE_HTML = re.compile(r'<[^>]+>')
@@ -22,6 +24,14 @@ class SRTReader(BaseReader):
             return False
 
     def read(self, content, lang='en-US', strip_html=False, strip_ass_tags=False):
+        if strip_html:
+            warnings.warn("Using strip_html in the read function is deprecated. "
+                          "Use CaptionSet.strip_html_tags() instead", DeprecationWarning)
+
+        if strip_ass_tags:
+            warnings.warn("Using strip_ass_tags in the read function is deprecated. "
+                          "Use CaptionSet.strip_ass_tags() instead", DeprecationWarning)
+
         if not isinstance(content, str):
             raise InvalidInputError('The content is not a unicode string.')
 
