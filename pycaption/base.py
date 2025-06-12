@@ -408,18 +408,11 @@ class CaptionSet:
             captions = self.get_captions(lang)
             out_captions = CaptionList()
             for caption in captions:
-                valid_nodes = []
-                for node in caption.nodes:
-                    if node.type_ == CaptionNode.TEXT:
-                        if node.content.strip():
-                            valid_nodes.append(node)
-                    else:
-                        valid_nodes.append(node)
-
-                valid_text_nodes = [node for node in valid_nodes if node.type_ == CaptionNode.TEXT]
+                valid_text_nodes = [
+                    node for node in caption.nodes if node.type_ == CaptionNode.TEXT and node.content.strip()
+                ]
                 if valid_text_nodes:
                     out_captions.append(caption)
-
             self.set_captions(lang, out_captions)
 
 
