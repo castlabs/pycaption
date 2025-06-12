@@ -403,6 +403,25 @@ class CaptionSet:
                 out_captions.append(caption)
             self.set_captions(lang, out_captions)
 
+    def remove_empty_captions(self):
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            out_captions = CaptionList()
+            for caption in captions:
+                valid_nodes = []
+                for node in caption.nodes:
+                    if node.type_ == CaptionNode.TEXT:
+                        if node.content.strip():
+                            valid_nodes.append(node)
+                    else:
+                        valid_nodes.append(node)
+
+                valid_text_nodes = [node for node in valid_nodes if node.type_ == CaptionNode.TEXT]
+                if valid_text_nodes:
+                    out_captions.append(caption)
+
+            self.set_captions(lang, out_captions)
+
 
 # Functions
 def merge_concurrent_captions(caption_set):
