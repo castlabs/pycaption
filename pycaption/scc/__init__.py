@@ -236,7 +236,7 @@ class SCCReader(BaseReader):
         else:
             return False
 
-    def read(self, content, lang="en-US", simulate_roll_up=False, offset=0, merge_captions=False):
+    def read(self, content, lang="en-US", simulate_roll_up=False, offset=0):
         """Converts the unicode string into a CaptionSet
 
         :type content: str
@@ -252,11 +252,6 @@ class SCCReader(BaseReader):
 
         :type offset: int
         :param offset:
-
-        :type merge_captions: bool
-        :param merge_captions: If True, we will merge captions that have the same
-            start and end time. We do this by merging their nodes together, separating
-            them with a line break.
 
         :rtype: CaptionSet
         """
@@ -275,24 +270,6 @@ class SCCReader(BaseReader):
         self._flush_implicit_buffers(self.buffer_dict.active_key)
 
         captions_raw = self.caption_stash.get_all()
-        if merge_captions:
-            _captions_by_start = self._group_captions_by_start_time(captions_raw)
-
-            all_captions_with_same_time = [l for l in _captions_by_start if len(l) > 1]
-            for current_captions_with_same_time in all_captions_with_same_time:
-                nodes_to_append = [CaptionNode(CaptionNode.BREAK)]
-                for dupe_caption in current_captions_with_same_time[1:]:
-                    nodes_to_append.extend(dupe_caption.nodes)
-                    nodes_to_append.append(CaptionNode(CaptionNode.BREAK))
-                    captions_raw.remove(dupe_caption)
-
-                if len(nodes_to_append) > 0:
-                    if nodes_to_append[-1].type_ == CaptionNode.BREAK:
-                        nodes_to_append.pop()
-
-                if nodes_to_append:
-                    current_captions_with_same_time[0].nodes.extend(nodes_to_append)
-
         captions = CaptionSet({lang: captions_raw})
 
         # check captions for incorrect lengths
