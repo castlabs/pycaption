@@ -286,7 +286,12 @@ class SCCReader(BaseReader):
                     nodes_to_append.append(CaptionNode(CaptionNode.BREAK))
                     captions_raw.remove(dupe_caption)
 
-                current_captions_with_same_time[0].nodes.extend(nodes_to_append)
+                if len(nodes_to_append) > 0:
+                    if nodes_to_append[-1].type_ == CaptionNode.BREAK:
+                        nodes_to_append.pop()
+
+                if nodes_to_append:
+                    current_captions_with_same_time[0].nodes.extend(nodes_to_append)
 
         captions = CaptionSet({lang: captions_raw})
 
