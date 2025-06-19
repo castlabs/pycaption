@@ -1,6 +1,7 @@
 import os
 import re
 from collections import defaultdict
+from collections import OrderedDict
 from datetime import timedelta
 from numbers import Number
 
@@ -423,6 +424,64 @@ class CaptionSet:
                 for node in caption.nodes:
                     node.layout_info = None
 
+    @staticmethod
+    def _group_captions_by_start_time(caps: CaptionList):
+        """
+        Groups captions that have the same start time.
+
+        :param caps:
+        :return:
+        """
+
+        caps_start_time = OrderedDict()
+        for i, cap in enumerate(caps):
+            if cap.start not in caps_start_time:
+                caps_start_time[cap.start] = [cap]
+            else:
+                caps_start_time[cap.start].append(cap)
+
+        # order by start timestamp
+        caps_start_time = OrderedDict(sorted(caps_start_time.items(), key=lambda item: item[0]))
+
+        # check if captions with the same start time also have the same end time
+        # fail if different end times are found - this is not (yet?) supported
+        caps_final = []
+        for start_time, caps_list in caps_start_time.items():
+            if len(caps_list) == 1:
+                caps_final.append(caps_list)
+            else:
+                end_times = list(set([c.end for c in caps_list]))
+                if len(end_times) != 1:
+                    raise ValueError("Unsupported subtitles - overlapping subtitles with different end times found")
+                else:
+                    caps_final.append(caps_list)
+        return caps_final
+
+    def make_sure_of_sane_start_times_and_gap(self, min_sub_gap_ms=250):
+        """
+        Makes sure that the start of a caption is not identical to end of the previous one
+        and that there is a minimum gap between captions.
+        :param min_sub_gap_ms:
+        :return:
+        """
+        for lang in self.get_languages():
+            _captions = self.get_captions(lang)
+            _captions_by_start = self._group_captions_by_start_time(_captions)
+
+            for i, caps in enumerate(_captions_by_start):
+                if i == 0:
+                    continue
+
+                prev_caption_end = _captions_by_start[i - 1][0].end
+                curr_caption_start = caps[0].start
+                curr_caption_end = caps[0].end
+
+                if curr_caption_start < prev_caption_end:
+                    for c in caps:
+                        c.start = min(prev_caption_end + (min_sub_gap_ms * 1000), c.end)
+                elif curr_caption_start == prev_caption_end:
+                    for c in caps:
+                        c.start = min(prev_caption_end + (min_sub_gap_ms * 1000), curr_caption_end)
 
 
 # Functions
