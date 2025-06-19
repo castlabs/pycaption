@@ -415,6 +415,15 @@ class CaptionSet:
                     out_captions.append(caption)
             self.set_captions(lang, out_captions)
 
+    def remove_layout_info(self):
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            for caption in captions:
+                caption.layout_info = None
+                for node in caption.nodes:
+                    node.layout_info = None
+
+
 
 # Functions
 def merge_concurrent_captions(caption_set):
