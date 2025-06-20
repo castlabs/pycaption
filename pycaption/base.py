@@ -383,6 +383,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def strip_html_tags(self):
+        """
+        Iterates all captions and nodes in all languages and strips HTML tags (matching the RE_HTML_STRIP regex)
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -394,6 +397,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def strip_ass_tags(self):
+        """
+        Iterates all captions and nodes in all languages and strips ASS tags (matching the RE_ASS_STRIP regex)
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -405,6 +411,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def remove_empty_captions(self):
+        """
+        Removes captions which have only empty TEXT nodes.
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -417,6 +426,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def remove_layout_info(self):
+        """
+        Removes layout info from all captions and nodes in all languages.
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             for caption in captions:
@@ -425,12 +437,12 @@ class CaptionSet:
                     node.layout_info = None
 
     @staticmethod
-    def _group_captions_by_start_time(caps: CaptionList):
+    def _group_captions_by_start_time(caps: CaptionList) -> list[list[Caption]]:
         """
         Groups captions that have the same start time.
 
-        :param caps:
-        :return:
+        :param caps: CaptionList of captions to group
+        :return: List of lists of captions, where each inner list contains captions with the same start time.
         """
 
         caps_start_time = OrderedDict()
@@ -461,8 +473,7 @@ class CaptionSet:
         """
         Makes sure that the start of a caption is not identical to end of the previous one
         and that there is a minimum gap between captions.
-        :param min_sub_gap_ms:
-        :return:
+        :param min_sub_gap_ms: minimum gap in milliseconds that should be between captions
         """
         for lang in self.get_languages():
             _captions = self.get_captions(lang)
