@@ -483,7 +483,7 @@ class CaptionSet:
                     for c in caps:
                         c.start = min(prev_caption_end + (min_sub_gap_ms * 1000), curr_caption_end)
 
-    def merge_captions(self):
+    def merge_captions(self, merge_layout_info=False):
         """
         Merge captions that have the same start and end time.
         We do this by merging their nodes together, separating them with a line break.
@@ -505,7 +505,22 @@ class CaptionSet:
                         nodes_to_append.pop()
 
                 if nodes_to_append:
-                    current_captions_with_same_time[0].nodes.extend(nodes_to_append)
+                    current_caption = current_captions_with_same_time[0]
+                    current_caption.nodes.extend(nodes_to_append)
+                    if merge_layout_info:
+                        layout_info = current_caption.layout_info
+                        if not layout_info:
+                            for node in current_caption.nodes:
+                                if node.type_ == CaptionNode.TEXT:
+                                    layout_info = node.layout_info
+                                    if layout_info:
+                                        break
+                        if not layout_info:
+                            return
+
+                        current_caption.layout_info = layout_info
+                        for node in current_captions_with_same_time[0].nodes:
+                            node.layout_info = layout_info
 
 # Functions
 def merge_concurrent_captions(caption_set):
