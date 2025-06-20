@@ -432,7 +432,10 @@ class CaptionSet:
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             for caption in captions:
+                # strip layout info from caption
                 caption.layout_info = None
+
+                # strip layout info from all nodes in caption
                 for node in caption.nodes:
                     node.layout_info = None
 
@@ -480,6 +483,7 @@ class CaptionSet:
             _captions_by_start = self._group_captions_by_start_time(_captions)
 
             for i, caps in enumerate(_captions_by_start):
+                # skip the first caption, as it has no previous caption to compare to
                 if i == 0:
                     continue
 
