@@ -1,6 +1,7 @@
 import os
 import re
 from collections import defaultdict
+from collections import OrderedDict
 from datetime import timedelta
 from numbers import Number
 
@@ -382,6 +383,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def strip_html_tags(self):
+        """
+        Iterates all captions and nodes in all languages and strips HTML tags (matching the RE_HTML_STRIP regex)
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -393,6 +397,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def strip_ass_tags(self):
+        """
+        Iterates all captions and nodes in all languages and strips ASS tags (matching the RE_ASS_STRIP regex)
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -404,6 +411,9 @@ class CaptionSet:
             self.set_captions(lang, out_captions)
 
     def remove_empty_captions(self):
+        """
+        Removes captions which have only empty TEXT nodes.
+        """
         for lang in self.get_languages():
             captions = self.get_captions(lang)
             out_captions = CaptionList()
@@ -415,6 +425,117 @@ class CaptionSet:
                     out_captions.append(caption)
             self.set_captions(lang, out_captions)
 
+    def remove_layout_info(self):
+        """
+        Removes layout info from all captions and nodes in all languages.
+        """
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            for caption in captions:
+                # strip layout info from caption
+                caption.layout_info = None
+
+                # strip layout info from all nodes in caption
+                for node in caption.nodes:
+                    node.layout_info = None
+
+    @staticmethod
+    def _group_captions_by_start_time(caps: CaptionList) -> list[list[Caption]]:
+        """
+        Groups captions that have the same start time.
+
+        :param caps: CaptionList of captions to group
+        :return: List of lists of captions, where each inner list contains captions with the same start time.
+        """
+
+        caps_start_time = OrderedDict()
+        for i, cap in enumerate(caps):
+            if cap.start not in caps_start_time:
+                caps_start_time[cap.start] = [cap]
+            else:
+                caps_start_time[cap.start].append(cap)
+
+        # order by start timestamp
+        caps_start_time = OrderedDict(sorted(caps_start_time.items(), key=lambda item: item[0]))
+
+        # check if captions with the same start time also have the same end time
+        # fail if different end times are found - this is not (yet?) supported
+        caps_final = []
+        for start_time, caps_list in caps_start_time.items():
+            if len(caps_list) == 1:
+                caps_final.append(caps_list)
+            else:
+                end_times = list(set([c.end for c in caps_list]))
+                if len(end_times) != 1:
+                    raise ValueError("Unsupported subtitles - overlapping subtitles with different end times found")
+                else:
+                    caps_final.append(caps_list)
+        return caps_final
+
+    def make_sure_of_sane_start_times_and_gap(self, min_sub_gap_ms=250):
+        """
+        Makes sure that the start of a caption is not identical to end of the previous one
+        and that there is a minimum gap between captions.
+        :param min_sub_gap_ms: minimum gap in milliseconds that should be between captions
+        """
+        for lang in self.get_languages():
+            _captions = self.get_captions(lang)
+            _captions_by_start = self._group_captions_by_start_time(_captions)
+
+            for i, caps in enumerate(_captions_by_start):
+                # skip the first caption, as it has no previous caption to compare to
+                if i == 0:
+                    continue
+
+                prev_caption_end = _captions_by_start[i - 1][0].end
+                curr_caption_start = caps[0].start
+                curr_caption_end = caps[0].end
+
+                if curr_caption_start < prev_caption_end:
+                    for c in caps:
+                        c.start = min(prev_caption_end + (min_sub_gap_ms * 1000), c.end)
+                elif curr_caption_start == prev_caption_end:
+                    for c in caps:
+                        c.start = min(prev_caption_end + (min_sub_gap_ms * 1000), curr_caption_end)
+
+    def merge_captions(self, merge_layout_info=False):
+        """
+        Merge captions that have the same start and end time.
+        We do this by merging their nodes together, separating them with a line break.
+        """
+        for lang in self.get_languages():
+            captions_raw = self.get_captions(lang)
+            _captions_by_start = self._group_captions_by_start_time(captions_raw)
+
+            all_captions_with_same_time = [l for l in _captions_by_start if len(l) > 1]
+            for current_captions_with_same_time in all_captions_with_same_time:
+                nodes_to_append = [CaptionNode(CaptionNode.BREAK)]
+                for dupe_caption in current_captions_with_same_time[1:]:
+                    nodes_to_append.extend(dupe_caption.nodes)
+                    nodes_to_append.append(CaptionNode(CaptionNode.BREAK))
+                    captions_raw.remove(dupe_caption)
+
+                if len(nodes_to_append) > 0:
+                    if nodes_to_append[-1].type_ == CaptionNode.BREAK:
+                        nodes_to_append.pop()
+
+                if nodes_to_append:
+                    current_caption = current_captions_with_same_time[0]
+                    current_caption.nodes.extend(nodes_to_append)
+                    if merge_layout_info:
+                        layout_info = current_caption.layout_info
+                        if not layout_info:
+                            for node in current_caption.nodes:
+                                if node.type_ == CaptionNode.TEXT:
+                                    layout_info = node.layout_info
+                                    if layout_info:
+                                        break
+                        if not layout_info:
+                            return
+
+                        current_caption.layout_info = layout_info
+                        for node in current_captions_with_same_time[0].nodes:
+                            node.layout_info = layout_info
 
 # Functions
 def merge_concurrent_captions(caption_set):
