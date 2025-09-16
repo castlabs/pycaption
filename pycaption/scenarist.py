@@ -90,15 +90,13 @@ class ScenaristDVDWriter(BaseWriter):
     palette_image.putpalette([*paColor, *e1Color, *e2Color, *bgColor] + [0, 0, 0] * 252)
 
     font_langs = {
-        Language.get('en'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-Regular-Note-Math.ttf",
-                             'align': 'left'},
-        Language.get('ru'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-Regular-Note-Math.ttf",
-                             'align': 'left'},
-        Language.get('ar'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-RegularAndArabic.ttf", 'align': 'right'},
-        Language.get('ja-JP'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansJP+Math-Regular.ttf", 'align': 'left'},
-        Language.get('zh-TW'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansTC+Math-Regular.ttf", 'align': 'left'},
-        Language.get('zh-CN'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansSC+Math-Regular.ttf", 'align': 'left'},
-        Language.get('ko-KR'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansKR+Math-Regular.ttf", 'align': 'left'},
+        Language.get('en'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-Regular-Note-Math.ttf"},
+        Language.get('ru'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-Regular-Note-Math.ttf"},
+        Language.get('ar'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-RegularAndArabic.ttf", 'align': 'right'},  # will override align to right
+        Language.get('ja-JP'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansJP+Math-Regular.ttf"},
+        Language.get('zh-TW'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansTC+Math-Regular.ttf"},
+        Language.get('zh-CN'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansSC+Math-Regular.ttf"},
+        Language.get('ko-KR'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansKR+Math-Regular.ttf"},
     }
 
     def __init__(self, relativize=True, video_width=720, video_height=480, fit_to_screen=True, tape_type='NON_DROP',
@@ -222,6 +220,7 @@ class ScenaristDVDWriter(BaseWriter):
             position='bottom',
             avoid_same_next_start_prev_end=False,
             tiff_compression='tiff_deflate',
+            align='center',
     ):
         if tiff_compression not in ['tiff_deflate', 'raw']:
             raise ValueError('Unknown tiff_compression. Supported: {}'.format('tiff_deflate, raw'))
@@ -260,7 +259,7 @@ class ScenaristDVDWriter(BaseWriter):
             raise ValueError('Cannot find appropriate font for selected language')
 
         fnt = distances[0][1]['fontfile']
-        align = distances[0][1]['align']
+        align = distances[0][1].get('align') or align
         missing_glyphs = self.get_missing_glyphs(fnt, self.get_characters(caps_final))
 
         if missing_glyphs:
@@ -320,7 +319,7 @@ class ScenaristDVDWriter(BaseWriter):
         str_value = str_value + ':%02d' % (int((int(value / 1000) % 1000) / int(1000 / self.frame_rate)))
         return str_value
 
-    def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom', align: str = 'left'):
+    def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom', align: str = 'center'):
         for caption in caption_list:
             text = caption.get_text()
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
