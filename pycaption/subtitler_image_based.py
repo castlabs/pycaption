@@ -30,10 +30,10 @@ def get_sst_pixel_display_params(video_width, video_height):
 class SubtitleImageBasedWriter(BaseWriter):
     VALID_POSITION = ['top', 'bottom', 'source']
 
-    paColor = (0, 0, 0)  # letter body
-    e1Color = (0, 0, 0)  # antialiasing color
+    paColor = (255, 255, 255)  # letter body
+    e1Color = (190, 190, 190)  # antialiasing color
     e2Color = (0, 0, 0)  # border color
-    bgColor = (0, 0, 0)  # background color
+    bgColor = (0, 255, 0)  # background color
 
     palette_image = Image.new("P", (1, 1))
     palette_image.putpalette([*paColor, *e1Color, *e2Color, *bgColor] + [0, 0, 0] * 252)

@@ -71,10 +71,6 @@ def _zippy(base_path, path, archive):
 
 class ScenaristDVDWriter(SubtitleImageBasedWriter):
 
-    paColor = (255, 255, 255)  # letter body
-    e1Color = (190, 190, 190)  # antialiasing color
-    e2Color = (0, 0, 0)  # border color
-    bgColor = (0, 255, 0)  # background color
     tiff_compression = None
 
     def __init__(self, relativize=True, video_width=720, video_height=480, fit_to_screen=True, tape_type='NON_DROP',
