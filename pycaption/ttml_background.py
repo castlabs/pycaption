@@ -6,8 +6,7 @@ from io import BytesIO
 from pycaption.base import CaptionSet
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
-HEADER = """
-<?xml version='1.0' encoding='UTF-8'?>
+HEADER = """<?xml version='1.0' encoding='UTF-8'?>
 <tt xmlns:itts="http://www.w3.org/ns/ttml/profile/imsc1#styling"
     xmlns:ittp="http://www.w3.org/ns/ttml/profile/imsc1#parameter"
     xmlns:ittm="http://www.w3.org/ns/ttml/profile/imsc1#metadata"
@@ -31,8 +30,7 @@ HEADER = """
 SUB = """<div region="r1" begin="{begin}" end="{end}" smpte:backgroundImage="data:image/png;base64,{png}"/>
 """
 
-FOOTER = """
-</body>
+FOOTER = """</body>
 </tt>"""
 
 
