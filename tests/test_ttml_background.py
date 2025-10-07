@@ -42,7 +42,8 @@ class TestTTMLBackgroundWriterTestCase:
     def test_styling(self, sample_dfxp_from_sami_with_positioning):
         caption_set = DFXPReader().read(sample_dfxp_from_sami_with_positioning)
         results = self.writer.write(caption_set)
-        assert results == """<tt xmlns:itts="http://www.w3.org/ns/ttml/profile/imsc1#styling"
+        assert results == """<?xml version='1.0' encoding='UTF-8'?>
+<tt xmlns:itts="http://www.w3.org/ns/ttml/profile/imsc1#styling"
     xmlns:ittp="http://www.w3.org/ns/ttml/profile/imsc1#parameter"
     xmlns:ittm="http://www.w3.org/ns/ttml/profile/imsc1#metadata"
     xmlns:ttm="http://www.w3.org/ns/ttml#metadata"
