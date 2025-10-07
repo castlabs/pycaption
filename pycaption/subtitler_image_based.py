@@ -237,16 +237,6 @@ class SubtitleImageBasedWriter(BaseWriter):
 
         return caps_final, overlapping
 
-    def format_ts(self, value):
-        datetime_value = timedelta(seconds=(int(value / 1000000)))
-        str_value = str(datetime_value)[:11]
-
-        # make sure all numbers are padded with 0 to two places
-        str_value = ':'.join([n.zfill(2) for n in str_value.split(':')])
-
-        str_value = str_value + ':%02d' % (int((int(value / 1000) % 1000) / int(1000 / self.frame_rate)))
-        return str_value
-
     def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom',
                   align: str = 'left'):
         ascender, descender = fnt.getmetrics()

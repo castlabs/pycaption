@@ -3,6 +3,8 @@ import tempfile
 from datetime import timedelta
 from io import BytesIO
 
+from PIL import Image
+
 from pycaption.base import CaptionSet
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
@@ -79,21 +81,11 @@ class TTMLBackgroundWriter(SubtitleImageBasedWriter):
             for i, cap_list in enumerate(caps_final):
                 sub_img = open(tmpDir + "/subtitle%04d.png" % index, "rb").read()
                 subtitles += SUB.format(
-                    begin=self.to_ttml_timestamp(cap_list[0].start),
-                    end=self.to_ttml_timestamp(cap_list[0].end),
+                    begin=cap_list[0].format_start(),
+                    end=cap_list[0].format_end(),
                     png=base64.b64encode(sub_img).decode()
                 )
                 index = index + 1
             subtitles += FOOTER
 
         return subtitles
-
-    def format_ts(self, value):
-        datetime_value = timedelta(seconds=(int(value / 1000000)))
-        str_value = str(datetime_value)[:11]
-
-        # make sure all numbers are padded with 0 to two places
-        str_value = ':'.join([n.zfill(2) for n in str_value.split(':')])
-
-        str_value = str_value + ':%02d' % (int((int(value / 1000) % 1000) / int(1000 / self.frame_rate)))
-        return str_value
