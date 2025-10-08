@@ -8,7 +8,7 @@ from PIL import Image
 from pycaption.base import CaptionSet
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
-HEADER = """<?xml version='1.0' encoding='UTF-8'?>
+HEADER_A = """<?xml version='1.0' encoding='UTF-8'?>
 <tt xmlns:itts="http://www.w3.org/ns/ttml/profile/imsc1#styling"
     xmlns:ittp="http://www.w3.org/ns/ttml/profile/imsc1#parameter"
     xmlns:ittm="http://www.w3.org/ns/ttml/profile/imsc1#metadata"
@@ -25,11 +25,18 @@ HEADER = """<?xml version='1.0' encoding='UTF-8'?>
     <layout>
         <region xml:id="r1" tts:origin="0% 0%" tts:extent="100% 100%" tts:showBackground="always" tts:textAlign="left" tts:displayAlign="before" />
     </layout>
+    <metadata>
+"""
+
+IMG_DEF = """<smpte:image imageType="PNG" encoding="Base64" xml:id="img_{index}">{png}</smpte:image>"""
+
+HEADER_B = """
+    </metadata>
 </head>
 <body>
 """
 
-SUB = """<div region="r1" begin="{begin}" end="{end}" smpte:backgroundImage="data:image/png;base64,{png}"/>
+SUB = """<div region="r1" begin="{begin}" end="{end}" smpte:backgroundImage="img_{index}"/>
 """
 
 FOOTER = """</body>
@@ -47,7 +54,6 @@ class TTMLBackgroundWriter(SubtitleImageBasedWriter):
     def save_image(self, tmp_dir, index, img):
         # Jetzt speichern mit Transparenz
         img.save(tmp_dir + '/subtitle%04d.png' % index, transparency=3)
-
 
     def to_ttml_timestamp(self, ms: int) -> str:
         hours = ms // 3_600_000
@@ -68,24 +74,29 @@ class TTMLBackgroundWriter(SubtitleImageBasedWriter):
         lang = caption_set.get_languages().pop()
         caps = caption_set.get_captions(lang)
 
-        buf = BytesIO()
         with tempfile.TemporaryDirectory() as tmpDir:
             caps_final, overlapping = self.write_images(caps, lang, tmpDir, position, align,
                                                         avoid_same_next_start_prev_end)
 
-            index = 1
-
             subtitles = ""
-            subtitles += HEADER
+            subtitles += HEADER_A
 
-            for i, cap_list in enumerate(caps_final):
-                sub_img = open(tmpDir + "/subtitle%04d.png" % index, "rb").read()
+            for i, cap_list in enumerate(caps_final, 1):
+                sub_img = open(tmpDir + "/subtitle%04d.png" % i, "rb").read()
+                subtitles += IMG_DEF.format(
+                    index=i,
+                    png=base64.b64encode(sub_img).decode()
+                )
+
+            subtitles += HEADER_B
+
+            for i, cap_list in enumerate(caps_final, 1):
                 subtitles += SUB.format(
                     begin=cap_list[0].format_start(),
                     end=cap_list[0].format_end(),
-                    png=base64.b64encode(sub_img).decode()
+                    index=i,
                 )
-                index = index + 1
+
             subtitles += FOOTER
 
         return subtitles
