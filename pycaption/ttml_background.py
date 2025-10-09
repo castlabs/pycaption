@@ -36,7 +36,7 @@ HEADER_B = """
 <body>
 """
 
-SUB = """<div region="r1" begin="{begin}" end="{end}" smpte:backgroundImage="img_{index}"/>
+SUB = """<div region="r1" begin="{begin}" end="{end}" smpte:backgroundImage="#img_{index}"/>
 """
 
 FOOTER = """</body>
