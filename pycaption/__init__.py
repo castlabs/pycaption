@@ -7,7 +7,7 @@ from .dfxp import DFXPWriter, DFXPReader
 from .microdvd import MicroDVDReader, MicroDVDWriter
 from .sami import SAMIReader, SAMIWriter
 from .scenarist import ScenaristDVDWriter
-from .ass import ASSWriter
+from .filtergraph import FiltergraphWriter
 from .srt import SRTReader, SRTWriter
 from .scc import SCCReader, SCCWriter
 from .scc.translator import translate_scc
@@ -24,7 +24,7 @@ __all__ = [
     'SCCReader', 'SCCWriter', 'translate_scc', 'WebVTTReader', 'WebVTTWriter',
     'CaptionReadError', 'CaptionReadNoCaptions', 'CaptionReadSyntaxError',
     'detect_format', 'CaptionNode', 'Caption', 'CaptionList', 'CaptionSet',
-    'ScenaristDVDWriter', 'ASSWriter', 'TranscriptWriter'
+    'ScenaristDVDWriter', 'FiltergraphWriter', 'TranscriptWriter'
 ]
 
 SUPPORTED_READERS = (
