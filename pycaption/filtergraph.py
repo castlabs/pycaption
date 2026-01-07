@@ -125,7 +125,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                     zf.write(img_path, f'{self.output_dir}/subtitle{i:04d}.png')
 
                 # Add filtergraph
-                zf.writestr('filtergraph.txt', filtergraph)
+                zf.writestr(f'{self.output_dir}/filtergraph.txt', filtergraph)
 
 
         buf.seek(0)
