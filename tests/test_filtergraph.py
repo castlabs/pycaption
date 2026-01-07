@@ -26,10 +26,9 @@ Second subtitle
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
             names = zf.namelist()
-            assert 'images/subtitle0001.png' in names
-            assert 'images/subtitle0002.png' in names
+            assert 'embedded_subs/subtitle0001.png' in names
+            assert 'embedded_subs/subtitle0002.png' in names
             assert 'filtergraph.txt' in names
-            assert 'render.sh' in names
 
     def test_filtergraph_structure(self):
         """Test that filtergraph has correct structure."""
@@ -48,53 +47,20 @@ Test
             assert 'format=yuva420p' in filtergraph
 
             # Should have movie input for image
-            assert 'movie=images/subtitle0001.png' in filtergraph
+            assert 'movie=embedded_subs/subtitle0001.png' in filtergraph
 
             # Should have overlay with timing
             assert 'overlay=x=0:y=0:enable=' in filtergraph
             assert "between(t,1.000,4.000)" in filtergraph
 
-    def test_render_script(self):
-        """Test that render script has correct FFmpeg command."""
+    def test_custom_output_dir(self):
+        """Test custom output directory."""
         srt_content = """1
 00:00:01,000 --> 00:00:04,000
 Test
 """
         caption_set = SRTReader().read(srt_content)
-        zip_data = self.writer.write(caption_set)
-
-        with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            script = zf.read('render.sh').decode()
-
-            assert '#!/bin/bash' in script
-            assert 'ffmpeg' in script
-            assert '-c:v libvpx-vp9' in script
-            assert '-pix_fmt yuva420p' in script
-            assert 'subtitles.webm' in script
-            # Should read filtergraph from file
-            assert '-/filter_complex filtergraph.txt' in script
-
-    def test_custom_output_name(self):
-        """Test custom output filename."""
-        srt_content = """1
-00:00:01,000 --> 00:00:04,000
-Test
-"""
-        caption_set = SRTReader().read(srt_content)
-        zip_data = self.writer.write(caption_set, output_file='my_subs.webm')
-
-        with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            script = zf.read('render.sh').decode()
-            assert 'my_subs.webm' in script
-
-    def test_custom_image_dir(self):
-        """Test custom image directory."""
-        srt_content = """1
-00:00:01,000 --> 00:00:04,000
-Test
-"""
-        caption_set = SRTReader().read(srt_content)
-        zip_data = self.writer.write(caption_set, image_dir='subs')
+        zip_data = self.writer.write(caption_set, output_dir='subs')
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
             names = zf.namelist()
@@ -124,9 +90,9 @@ Third
             filtergraph = zf.read('filtergraph.txt').decode()
 
             # Should have 3 movie inputs
-            assert 'movie=images/subtitle0001.png' in filtergraph
-            assert 'movie=images/subtitle0002.png' in filtergraph
-            assert 'movie=images/subtitle0003.png' in filtergraph
+            assert 'movie=embedded_subs/subtitle0001.png' in filtergraph
+            assert 'movie=embedded_subs/subtitle0002.png' in filtergraph
+            assert 'movie=embedded_subs/subtitle0003.png' in filtergraph
 
             # Should have chained overlays
             assert '[base][s1]overlay' in filtergraph
