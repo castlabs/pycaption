@@ -127,6 +127,9 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                 # Add filtergraph
                 zf.writestr(f'{self.output_dir}/filtergraph.txt', filtergraph)
 
+            buf.seek(0)
+            with zipfile.ZipFile(buf, 'r') as zf:
+                print(zf.namelist())
 
         buf.seek(0)
         return buf.read()
