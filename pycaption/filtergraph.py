@@ -99,7 +99,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
             # Load each image
             for i in range(1, len(caps_final) + 1):
                 filter_parts.append(
-                    f"movie={output_dir}/subtitle{i:04d}.png,format=yuva420p[s{i}]"
+                    f"movie={self.output_dir}/subtitle{i:04d}.png,format=yuva420p[s{i}]"
                 )
 
             # Chain overlays
@@ -122,7 +122,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                 # Add images
                 for i in range(1, len(caps_final) + 1):
                     img_path = tmpDir + '/subtitle%04d.png' % i
-                    zf.write(img_path, f'{output_dir}/subtitle{i:04d}.png')
+                    zf.write(img_path, f'{self.output_dir}/subtitle{i:04d}.png')
 
                 # Add filtergraph
                 zf.writestr('filtergraph.txt', filtergraph)
