@@ -21,7 +21,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
     """
 
     def __init__(self, relativize=True, video_width=1920, video_height=1080,
-                 fit_to_screen=True, frame_rate=25):
+                 fit_to_screen=True, frame_rate=25, output_dir=None):
         """
         Initialize the filtergraph writer.
 
@@ -31,6 +31,10 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
         :param fit_to_screen: Ensure captions fit within screen bounds
         :param frame_rate: Frame rate for timing calculations
         """
+        if output_dir is None:
+            self.output_dir = 'embedded_subs'
+        else:
+            self.output_dir = output_dir
         super().__init__(relativize, video_width, video_height, fit_to_screen, frame_rate)
 
     def save_image(self, tmp_dir, index, img):
@@ -56,8 +60,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
             caption_set: CaptionSet,
             position='bottom',
             avoid_same_next_start_prev_end=False,
-            align='center',
-            output_dir='embedded_subs'
+            align='center'
     ):
         """
         Write captions as PNG images with an FFmpeg filtergraph for creating
