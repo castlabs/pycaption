@@ -96,7 +96,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                 f"color=c=black@0:s={self.video_width}x{self.video_height}:d={duration_seconds:.3f},format=yuva420p[base]"
             )
 
-            # Load each image
+            # Load each image (paths relative to where ffmpeg is run)
             for i in range(1, len(caps_final) + 1):
                 filter_parts.append(
                     f"movie={self.output_dir}/subtitle{i:04d}.png,format=yuva420p[s{i}]"
@@ -126,10 +126,6 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
 
                 # Add filtergraph
                 zf.writestr(f'{self.output_dir}/filtergraph.txt', filtergraph)
-
-            buf.seek(0)
-            with zipfile.ZipFile(buf, 'r') as zf:
-                print(zf.namelist())
 
         buf.seek(0)
         return buf.read()

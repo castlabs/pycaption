@@ -28,7 +28,7 @@ Second subtitle
             names = zf.namelist()
             assert 'embedded_subs/subtitle0001.png' in names
             assert 'embedded_subs/subtitle0002.png' in names
-            assert 'filtergraph.txt' in names
+            assert 'embedded_subs/filtergraph.txt' in names
 
     def test_filtergraph_structure(self):
         """Test that filtergraph has correct structure."""
@@ -40,13 +40,13 @@ Test
         zip_data = self.writer.write(caption_set)
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            filtergraph = zf.read('filtergraph.txt').decode()
+            filtergraph = zf.read('embedded_subs/filtergraph.txt').decode()
 
             # Should have color source for transparent base
             assert 'color=c=black@0:s=1920x1080' in filtergraph
             assert 'format=yuva420p' in filtergraph
 
-            # Should have movie input for image
+            # Should have movie input for image (path relative to ffmpeg working dir)
             assert 'movie=embedded_subs/subtitle0001.png' in filtergraph
 
             # Should have overlay with timing
@@ -55,18 +55,20 @@ Test
 
     def test_custom_output_dir(self):
         """Test custom output directory."""
+        writer = FiltergraphWriter(output_dir='subs')
         srt_content = """1
 00:00:01,000 --> 00:00:04,000
 Test
 """
         caption_set = SRTReader().read(srt_content)
-        zip_data = self.writer.write(caption_set, output_dir='subs')
+        zip_data = writer.write(caption_set)
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
             names = zf.namelist()
             assert 'subs/subtitle0001.png' in names
+            assert 'subs/filtergraph.txt' in names
 
-            filtergraph = zf.read('filtergraph.txt').decode()
+            filtergraph = zf.read('subs/filtergraph.txt').decode()
             assert 'movie=subs/subtitle0001.png' in filtergraph
 
     def test_multiple_overlays_chained(self):
@@ -87,7 +89,7 @@ Third
         zip_data = self.writer.write(caption_set)
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            filtergraph = zf.read('filtergraph.txt').decode()
+            filtergraph = zf.read('embedded_subs/filtergraph.txt').decode()
 
             # Should have 3 movie inputs
             assert 'movie=embedded_subs/subtitle0001.png' in filtergraph
@@ -116,7 +118,7 @@ Last one at 1:35
         zip_data = self.writer.write(caption_set)
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            filtergraph = zf.read('filtergraph.txt').decode()
+            filtergraph = zf.read('embedded_subs/filtergraph.txt').decode()
 
             # Duration should be ~96.5 seconds (95.5 + 1 buffer)
             assert 'd=96.500' in filtergraph
@@ -132,5 +134,5 @@ Test
         zip_data = writer.write(caption_set)
 
         with zipfile.ZipFile(BytesIO(zip_data), 'r') as zf:
-            filtergraph = zf.read('filtergraph.txt').decode()
+            filtergraph = zf.read('embedded_subs/filtergraph.txt').decode()
             assert 's=1280x720' in filtergraph
