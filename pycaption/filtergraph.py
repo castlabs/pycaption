@@ -56,9 +56,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
             caption_set: CaptionSet,
             position='bottom',
             avoid_same_next_start_prev_end=False,
-            align='center',
-            output_file='subtitles.webm',
-            image_dir='images'
+            align='center'
     ):
         """
         Write captions as PNG images with an FFmpeg filtergraph for creating
@@ -129,16 +127,13 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-ffmpeg -/filter_complex filtergraph.txt \\
-    -map "[out]" \\
-    -c:v libvpx-vp9 \\
-    -pix_fmt yuva420p \\
-    -cpu-used 8 \\
-    -deadline realtime \\
-    -row-mt 1 \\
-    -tile-columns 2 \\
-    -frame-parallel 1 \\
-    "{output_file}"
+ffmpeg \
+  -filter_complex_script filtergraph.txt \
+  -map "[out]" \
+  -c:v ffv1 \
+  -pix_fmt yuva420p \
+  -an \
+  "subtitles.mkv"
 
 echo "Created {output_file}"
 '''
