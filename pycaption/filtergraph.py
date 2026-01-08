@@ -38,9 +38,7 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
         super().__init__(relativize, video_width, video_height, fit_to_screen, frame_rate)
 
     def save_image(self, tmp_dir, index, img):
-        """Save subtitle image as optimized PNG with transparency."""
-        img = img.convert("RGBA")
-
+        """Save RGBA image as PNG with transparency."""
         img.save(
             tmp_dir + '/subtitle%04d.png' % index,
             optimize=True,

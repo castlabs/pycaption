@@ -52,8 +52,14 @@ class TTMLBackgroundWriter(SubtitleImageBasedWriter):
         self.frame_rate = frame_rate
 
     def save_image(self, tmp_dir, index, img):
-        # Jetzt speichern mit Transparenz
-        img.save(tmp_dir + '/subtitle%04d.png' % index, transparency=3)
+        """Convert RGBA to paletted PNG with transparency."""
+        # Replace transparent pixels with green background
+        background = Image.new('RGB', img.size, self.bgColor)
+        background.paste(img, mask=img.split()[3])  # Use alpha channel as mask
+
+        # Quantize to 4-color palette
+        img_quant = background.quantize(palette=self.palette_image, dither=0)
+        img_quant.save(tmp_dir + '/subtitle%04d.png' % index, transparency=3)
 
     def to_ttml_timestamp(self, ms: int) -> str:
         hours = ms // 3_600_000

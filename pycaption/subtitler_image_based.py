@@ -225,14 +225,13 @@ class SubtitleImageBasedWriter(BaseWriter):
 
         for i, cap_list in enumerate(caps_final):
 
-            img = Image.new('RGB', (self.video_width, self.video_height), self.bgColor)
+            # Create RGBA image with transparent background
+            img = Image.new('RGBA', (self.video_width, self.video_height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
             self.printLine(draw, cap_list, fnt, position, align)
 
-            # quantize the image to our palette
-            img_quant = img.quantize(palette=self.palette_image, dither=0)
-            self.save_image(tmpDir, index, img_quant)
-
+            # Pass RGBA image to subclass - each subclass converts as needed
+            self.save_image(tmpDir, index, img)
 
             index = index + 1
 
@@ -286,8 +285,8 @@ class SubtitleImageBasedWriter(BaseWriter):
                 else:
                     raise ValueError('Unknown "position": {}'.format(position))
 
-            borderColor = self.e2Color
-            fontColor = self.paColor
+            borderColor = (*self.e2Color, 255)  # Add alpha for RGBA
+            fontColor = (*self.paColor, 255)  # Add alpha for RGBA
             for adj in range(2):
                 # move right
                 draw.text((x - adj, y), text, font=fnt, fill=borderColor, align=align)

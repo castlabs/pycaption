@@ -4,6 +4,8 @@ import zipfile
 from datetime import timedelta
 from io import BytesIO
 
+from PIL import Image
+
 from pycaption.base import CaptionSet
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
@@ -87,7 +89,14 @@ class ScenaristDVDWriter(SubtitleImageBasedWriter):
             self.contrast = '(7 7 7 7)'
 
     def save_image(self, tmp_dir, index, img):
-        img.save(tmp_dir + '/subtitle%04d.tif' % index, compression=self.tiff_compression)
+        """Convert RGBA to paletted image for DVD subtitles."""
+        # Replace transparent pixels with green background
+        background = Image.new('RGB', img.size, self.bgColor)
+        background.paste(img, mask=img.split()[3])  # Use alpha channel as mask
+
+        # Quantize to 4-color palette
+        img_quant = background.quantize(palette=self.palette_image, dither=0)
+        img_quant.save(tmp_dir + '/subtitle%04d.tif' % index, compression=self.tiff_compression)
 
     def write(
             self,
