@@ -75,11 +75,21 @@ class ScenaristDVDWriter(SubtitleImageBasedWriter):
 
     tiff_compression = None
 
+    # DVD subtitle palette colors
+    paColor = (255, 255, 255)  # letter body (white)
+    e1Color = (190, 190, 190)  # antialiasing color (gray)
+    e2Color = (0, 0, 0)  # border color (black)
+    bgColor = (0, 255, 0)  # background color (green - will be transparent on DVD)
+
     def __init__(self, relativize=True, video_width=720, video_height=480, fit_to_screen=True, tape_type='NON_DROP',
                  frame_rate=25, compat=False):
         super().__init__(relativize, video_width, video_height, fit_to_screen, frame_rate)
         self.tape_type = tape_type
         self.frame_rate = frame_rate
+
+        # Create palette image for quantization (4 colors only - smaller output)
+        self.palette_image = Image.new("P", (1, 1))
+        self.palette_image.putpalette([*self.paColor, *self.e1Color, *self.e2Color, *self.bgColor])
 
         if compat:
             self.color = '(1 2 3 4)'

@@ -30,21 +30,13 @@ def get_sst_pixel_display_params(video_width, video_height):
 class SubtitleImageBasedWriter(BaseWriter):
     VALID_POSITION = ['top', 'bottom', 'source']
 
-    paColor = (255, 255, 255)  # letter body
-    e1Color = (190, 190, 190)  # antialiasing color
-    e2Color = (0, 0, 0)  # border color
-    bgColor = (0, 255, 0)  # background color
-
-    palette_image = Image.new("P", (1, 1))
-    palette_image.putpalette([*paColor, *e1Color, *e2Color, *bgColor] + [0, 0, 0] * 252)
+    # Default colors for RGBA rendering
+    fontColor = (255, 255, 255)  # white text
+    borderColor = (0, 0, 0)  # black border
 
     def __init__(self, relativize=True, video_width=720, video_height=480, fit_to_screen=True, frame_rate=25):
         super().__init__(relativize, video_width, video_height, fit_to_screen)
-        self.palette = [self.paColor, self.e1Color, self.e2Color, self.bgColor]
         self.frame_rate = frame_rate
-
-        palette_image = Image.new("P", (1, 1))
-        palette_image.putpalette([*self.paColor, *self.e1Color, *self.e2Color, *self.bgColor] + [0, 0, 0] * 252)
 
         self.font_langs = {
             Language.get('en'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansDisplay-Regular-Note-Math.ttf"},
@@ -285,25 +277,25 @@ class SubtitleImageBasedWriter(BaseWriter):
                 else:
                     raise ValueError('Unknown "position": {}'.format(position))
 
-            borderColor = (*self.e2Color, 255)  # Add alpha for RGBA
-            fontColor = (*self.paColor, 255)  # Add alpha for RGBA
+            border = (*self.borderColor, 255)  # Add alpha for RGBA
+            font = (*self.fontColor, 255)  # Add alpha for RGBA
             for adj in range(2):
                 # move right
-                draw.text((x - adj, y), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x - adj, y), text, font=fnt, fill=border, align=align)
                 # move left
-                draw.text((x + adj, y), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x + adj, y), text, font=fnt, fill=border, align=align)
                 # move up
-                draw.text((x, y + adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x, y + adj), text, font=fnt, fill=border, align=align)
                 # move down
-                draw.text((x, y - adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x, y - adj), text, font=fnt, fill=border, align=align)
                 # diagnal left up
-                draw.text((x - adj, y + adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x - adj, y + adj), text, font=fnt, fill=border, align=align)
                 # diagnal right up
-                draw.text((x + adj, y + adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x + adj, y + adj), text, font=fnt, fill=border, align=align)
                 # diagnal left down
-                draw.text((x - adj, y - adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x - adj, y - adj), text, font=fnt, fill=border, align=align)
                 # diagnal right down
-                draw.text((x + adj, y - adj), text, font=fnt, fill=borderColor, align=align)
+                draw.text((x + adj, y - adj), text, font=fnt, fill=border, align=align)
 
-            draw.text((x, y), text, font=fnt, fill=fontColor, align=align)
+            draw.text((x, y), text, font=fnt, fill=font, align=align)
             lines_written += 1
