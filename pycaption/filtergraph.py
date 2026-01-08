@@ -39,9 +39,10 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
 
     def save_image(self, tmp_dir, index, img):
         """Save subtitle image as optimized PNG with transparency."""
+        img = img.convert("RGBA")
+
         img.save(
             tmp_dir + '/subtitle%04d.png' % index,
-            transparency=3,
             optimize=True,
             compress_level=9
         )

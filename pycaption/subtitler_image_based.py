@@ -217,7 +217,7 @@ class SubtitleImageBasedWriter(BaseWriter):
         if missing_glyphs:
             raise ValueError(f'Selected font was missing glyphs: {" ".join(missing_glyphs.keys())}')
 
-        min_font_px = 32
+        min_font_px = 16
         font_size = max(min_font_px, int(self.video_width * 0.05 * 0.6))  # rough estimate but should work
 
         fnt = ImageFont.truetype(fnt, font_size)
