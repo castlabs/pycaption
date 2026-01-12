@@ -92,13 +92,13 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
             # Start with transparent base
             filter_parts = []
             filter_parts.append(
-                f"color=c=black@0:s={self.video_width}x{self.video_height}:d={duration_seconds:.3f},format=yuva420p[base]"
+                f"color=c=black@0:s={self.video_width}x{self.video_height}:d={duration_seconds:.3f},format=yuva444p[base]"
             )
 
             # Load each image (paths relative to where ffmpeg is run)
             for i in range(1, len(caps_final) + 1):
                 filter_parts.append(
-                    f"movie={self.output_dir}/subtitle{i:04d}.png,format=yuva420p[s{i}]"
+                    f"movie={self.output_dir}/subtitle{i:04d}.png,format=yuva444p[s{i}]"
                 )
 
             # Chain overlays
