@@ -44,7 +44,7 @@ Test
 
             # Should have color source for transparent base
             assert 'color=c=black@0:s=1920x1080' in filtergraph
-            assert 'format=yuva420p' in filtergraph
+            assert 'format=yuva444p' in filtergraph
 
             # Should have movie input for image (path relative to ffmpeg working dir)
             assert 'movie=embedded_subs/subtitle0001.png' in filtergraph
