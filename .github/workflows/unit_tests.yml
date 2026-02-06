@@ -23,13 +23,21 @@ jobs:
         python-version: [ "py312"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Run Test
         id: tests
         run: |
-          ./run_tests.sh test_${{ matrix.python-version }} 
+          ./run_tests.sh test_${{ matrix.python-version }}
         continue-on-error: true
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Test Results (${{ matrix.python-version }})
+          path: junit.xml
+          reporter: java-junit
 
       - name: Archive production artifacts
         uses: actions/upload-artifact@v4
