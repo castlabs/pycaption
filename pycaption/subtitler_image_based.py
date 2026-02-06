@@ -10,6 +10,7 @@ from fontTools.ttLib import TTFont
 from langcodes import Language, tag_distance
 
 from pycaption.base import BaseWriter, CaptionSet, Caption, CaptionNode, CaptionList
+from pycaption.exceptions import CaptionRendererError
 from pycaption.geometry import UnitEnum, Size
 
 
@@ -215,7 +216,7 @@ class SubtitleImageBasedWriter(BaseWriter):
         missing_glyphs = self.get_missing_glyphs(fnt, self.get_characters(caps_final))
 
         if missing_glyphs:
-            raise ValueError(f'Selected font was missing glyphs: {" ".join(missing_glyphs.keys())}')
+            raise CaptionRendererError(f'Selected font was missing glyphs: {" ".join(missing_glyphs.keys())}')
 
         font_size = int(self.video_width * 0.05 * 0.6)  # rough estimate but should work
 
@@ -285,8 +286,19 @@ class SubtitleImageBasedWriter(BaseWriter):
                 else:
                     raise ValueError('Unknown "position": {}'.format(position))
 
+            # Check that text (including border outline) fits within the screen
+            border_offset = 1  # max adj value from border drawing loop
+            text_left = x - border_offset + l
+            text_top = y - border_offset + t
+            text_right = x + border_offset + r
+            text_bottom = y + border_offset + b
+            if text_left < 0 or text_top < 0 or text_right > self.video_width or text_bottom > self.video_height:
+                raise CaptionRendererError(
+                    f'Text runs off screen: text="{text}"'
+                )
             borderColor = self.e2Color
             fontColor = self.paColor
+
             for adj in range(2):
                 # move right
                 draw.text((x - adj, y), text, font=fnt, fill=borderColor, align=align)

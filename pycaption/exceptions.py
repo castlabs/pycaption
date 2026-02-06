@@ -41,3 +41,10 @@ class CaptionLineLengthError(CaptionReadError):
     """
     Error raised when a Caption has a line longer than 32 characters.
     """
+
+
+class CaptionRendererError(Exception):
+    """
+    Error raised when caption content cannot be rendered correctly,
+    e.g. text runs off screen or required glyphs are missing from the font.
+    """
