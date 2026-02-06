@@ -67,7 +67,7 @@ class TestWebVTTtoSRT(SRTTestingMixIn):
 
     def test_webvtt_to_srt_conversion_pos_top(self, sample_srt_top, sample_webvtt):
         caption_set = WebVTTReader().read(sample_webvtt)
-        results = SRTWriter(video_width=720, video_height=480 ).write(caption_set, position='top')
+        results = SRTWriter(video_width=720, video_height=480).write(caption_set, position='top')
 
         assert isinstance(results, str)
         self.assert_srt_equals(sample_srt_top, results)
