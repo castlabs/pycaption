@@ -182,8 +182,8 @@ class SRTWriter(BaseWriter):
             elif position == 'top':
                 # Approximate character dimensions for coordinate estimation.
                 # The player uses its own font so these are just reasonable hints.
-                char_width = round(self.video_width * 0.013)
-                line_height = round(self.video_height * 0.042)
+                char_width = round(self.video_width * 0.018)
+                line_height = round(self.video_height * 0.05)
                 padding_top = 10
                 lines = new_content.split('\n')
                 max_line_len = max(len(line) for line in lines)
