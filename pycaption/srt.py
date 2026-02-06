@@ -1,4 +1,3 @@
-import os
 from copy import deepcopy
 
 from .base import (
@@ -7,7 +6,6 @@ from .base import (
 from .exceptions import CaptionReadNoCaptions, InvalidInputError
 
 import re
-from PIL import Image, ImageFont, ImageDraw
 import warnings
 
 warnings.simplefilter('once', DeprecationWarning)
@@ -162,14 +160,6 @@ class SRTWriter(BaseWriter):
         srt = ''
         count = 1
 
-        fnt = ImageFont.truetype(os.path.dirname(__file__) + '/NotoSansDisplay-Regular-Note-Math.ttf', 30)
-
-        img = None
-        draw = None
-        if position == 'top':
-            img = Image.new('RGB', (self.video_width, self.video_height), (0, 255, 0))
-            draw = ImageDraw.Draw(img)
-
         for caption in captions:
             # Generate the text
             new_content = ''
@@ -190,13 +180,19 @@ class SRTWriter(BaseWriter):
                 # Use the old behavior, output just the timestamp, no coordinates.
                 timestamp = '%s --> %s' % (start[:12], end[:12])
             elif position == 'top':
+                # Approximate character dimensions for coordinate estimation.
+                # The player uses its own font so these are just reasonable hints.
+                char_width = round(self.video_width * 0.018)
+                line_height = round(self.video_height * 0.05)
                 padding_top = 10
-                l, t, r, b = draw.textbbox((0, 0), new_content, font=fnt)
-                l, t, r, b = draw.textbbox((self.video_width / 2 - r / 2, padding_top), new_content, font=fnt)
-                x1 = str(round(l)).zfill(3)
-                x2 = str(round(r)).zfill(3)
-                y1 = str(round(t)).zfill(3)
-                y2 = str(round(b)).zfill(3)
+                lines = new_content.split('\n')
+                max_line_len = max(len(line) for line in lines)
+                text_width = max_line_len * char_width
+                text_height = len(lines) * line_height
+                x1 = str(round(self.video_width / 2 - text_width / 2)).zfill(3)
+                x2 = str(round(self.video_width / 2 + text_width / 2)).zfill(3)
+                y1 = str(padding_top).zfill(3)
+                y2 = str(padding_top + text_height).zfill(3)
                 timestamp = '%s --> %s X1:%s X2:%s Y1:%s Y2:%s' % (start[:12], end[:12], x1, x2, y1, y2)
             else:
                 raise ValueError('Unsupported position: %s' % position)
