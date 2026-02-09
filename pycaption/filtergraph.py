@@ -2,19 +2,21 @@ import tempfile
 import zipfile
 from io import BytesIO
 
+from PIL import Image
+
 from pycaption.base import CaptionSet
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
 
 class FiltergraphWriter(SubtitleImageBasedWriter):
     """
-    FFmpeg filtergraph writer for image-based subtitles.
+    FFmpeg subtitle image writer using concat demuxer.
 
-    Generates PNG subtitle images and an FFmpeg filtergraph that can be used
-    to create a transparent WebM video with subtitle overlays.
+    Generates PNG subtitle images and an FFmpeg concat demuxer file that
+    sequences blank (transparent) and subtitle images with proper timing.
+    The concat file can be fed directly to ffmpeg as an input.
 
-    By default, generates Full HD (1920x1080) images. The filtergraph uses
-    the overlay filter with timing to display each subtitle at the correct time.
+    By default, generates Full HD (1920x1080) images.
 
     Uses PNG format for images with 4-color indexed palette for optimal
     compression (~6 KB per Full HD image).
@@ -62,12 +64,15 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
             align='center'
     ):
         """
-        Write captions as PNG images with an FFmpeg filtergraph for creating
-        a transparent WebM video overlay.
+        Write captions as PNG images with an FFmpeg concat demuxer file.
 
         Returns a ZIP file containing:
-        - PNG subtitle images in the specified image_dir
-        - filtergraph.txt: FFmpeg filter_complex script
+        - PNG subtitle images in the specified output_dir
+        - blank.png: Transparent image for gaps between subtitles
+        - concat.txt: FFmpeg concat demuxer file with timing
+
+        The concat.txt can be used directly as ffmpeg input:
+            ffmpeg -f concat -safe 0 -i {output_dir}/concat.txt ...
 
         :param caption_set: CaptionSet containing the captions to write
         :param position: Position of subtitles ('top', 'bottom', 'source')
@@ -84,37 +89,32 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                 caps, lang, tmpDir, position, align, avoid_same_next_start_prev_end
             )
 
-            # Calculate total duration (last end time)
-            max_end = max(cap_list[0].end for cap_list in caps_final)
-            duration_seconds = max_end / 1_000_000 + 1  # Add 1 second buffer
+            # Create blank transparent image for gaps between subtitles
+            blank = Image.new('RGBA', (self.video_width, self.video_height), (0, 0, 0, 0))
+            blank.save(tmpDir + '/blank.png', optimize=True, compress_level=9)
 
-            # Build FFmpeg filtergraph
-            # Start with transparent base
-            filter_parts = []
-            filter_parts.append(
-                f"color=c=black@0:s={self.video_width}x{self.video_height}:d={duration_seconds:.3f},format=yuva444p[base]"
-            )
-
-            # Load each image (paths relative to where ffmpeg is run)
-            for i in range(1, len(caps_final) + 1):
-                filter_parts.append(
-                    f"movie={self.output_dir}/subtitle{i:04d}.png,format=yuva444p[s{i}]"
-                )
-
-            # Chain overlays
-            prev_label = "base"
+            # Build concat demuxer file that sequences blank/subtitle images
+            concat_lines = ['ffconcat version 1.0']
+            prev_end_us = 0
             for i, cap_list in enumerate(caps_final, 1):
-                start_sec = self.format_ts_seconds(cap_list[0].start)
-                end_sec = self.format_ts_seconds(cap_list[0].end)
-                next_label = f"v{i}" if i < len(caps_final) else "out"
+                start_us = cap_list[0].start
+                end_us = cap_list[0].end
 
-                filter_parts.append(
-                    f"[{prev_label}][s{i}]overlay=x=0:y=0:enable='between(t,{start_sec},{end_sec})':format=auto[{next_label}]"
-                )
-                prev_label = next_label
+                # Gap before this subtitle
+                gap_us = start_us - prev_end_us
+                if gap_us > 0:
+                    concat_lines.append('file blank.png')
+                    concat_lines.append(f'duration {gap_us / 1_000_000:.3f}')
 
-            filtergraph = ";\n".join(filter_parts)
+                # Subtitle image
+                concat_lines.append(f'file subtitle{i:04d}.png')
+                concat_lines.append(f'duration {(end_us - start_us) / 1_000_000:.3f}')
 
+                prev_end_us = end_us
+
+            # Trailing blank so the last subtitle doesn't freeze on screen
+            concat_lines.append('file blank.png')
+            concat_text = '\n'.join(concat_lines)
 
             # Create ZIP archive
             with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -123,8 +123,9 @@ class FiltergraphWriter(SubtitleImageBasedWriter):
                     img_path = tmpDir + '/subtitle%04d.png' % i
                     zf.write(img_path, f'{self.output_dir}/subtitle{i:04d}.png')
 
-                # Add filtergraph
-                zf.writestr(f'{self.output_dir}/filtergraph.txt', filtergraph)
+                # Add blank image and concat file
+                zf.write(tmpDir + '/blank.png', f'{self.output_dir}/blank.png')
+                zf.writestr(f'{self.output_dir}/concat.txt', concat_text)
 
         buf.seek(0)
         return buf.read()
