@@ -104,3 +104,41 @@ class TestTextOffScreenSourcePosition:
         caption = make_caption("This text sticks out on the left", layout_info=layout)
         with pytest.raises(CaptionRendererError, match="Text runs off screen"):
             writer.printLine(draw, [caption], fnt, position='source', align='left')
+
+
+class TestBaselineAlignment:
+    """Render subtitle images with/without descenders to visually verify
+    that the baseline sits at a consistent 5% from the bottom."""
+
+    NO_DESCENDER = "AHLEN"       # no descenders
+    WITH_DESCENDER = "gypsy"     # descenders: g, y, p
+
+    COMBOS = [
+        ("no_desc_x2", [NO_DESCENDER, NO_DESCENDER]),
+        ("desc_x2", [WITH_DESCENDER, WITH_DESCENDER]),
+        ("top_no_bottom_yes", [NO_DESCENDER, WITH_DESCENDER]),
+        ("top_yes_bottom_no", [WITH_DESCENDER, NO_DESCENDER]),
+    ]
+
+    @pytest.fixture(params=COMBOS, ids=[c[0] for c in COMBOS])
+    def combo(self, request):
+        return request.param
+
+    def test_baseline_visual(self, combo, tmp_path):
+        name, lines = combo
+        width, height = 720, 480
+        writer, draw = make_writer_and_draw(width, height)
+        fnt = ImageFont.truetype(FONT_PATH, 28)
+
+        captions = [make_caption(text) for text in lines]
+        writer.printLine(draw, captions, fnt, position='bottom', align='center')
+
+        # Draw a red guide line at the 5% baseline position
+        baseline_y = int(height * 0.95)
+        img = draw._image
+        guide = ImageDraw.Draw(img)
+        guide.line([(0, baseline_y), (width, baseline_y)], fill=(255, 0, 0, 200), width=1)
+
+        out = tmp_path / f"baseline_{name}.png"
+        img.save(str(out))
+        print(f"\nSaved: {out}")
