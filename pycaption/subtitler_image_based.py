@@ -27,7 +27,6 @@ def get_sst_pixel_display_params(video_width, video_height):
     return py0, py1, dy0, dy1, dx0, dx1
 
 
-
 class SubtitleImageBasedWriter(BaseWriter):
     VALID_POSITION = ['top', 'bottom', 'source']
 
@@ -54,11 +53,8 @@ class SubtitleImageBasedWriter(BaseWriter):
             Language.get('th'): {'fontfile': f"{os.path.dirname(__file__)}/NotoSansThai-Regular.ttf"},
         }
 
-
-
     def save_image(self, tmp_dir, index, img):
         pass
-
 
     def get_characters(self, captions):
         all_characters = []
@@ -162,8 +158,6 @@ class SubtitleImageBasedWriter(BaseWriter):
         distances.sort(key=lambda l: l[0])
         return distances
 
-
-
     def write_images(
             self,
             caption_list: CaptionList,
@@ -175,7 +169,8 @@ class SubtitleImageBasedWriter(BaseWriter):
 
         position = position.lower().strip()
         if position not in SubtitleImageBasedWriter.VALID_POSITION:
-            raise ValueError('Unknown position. Supported: {}'.format(','.join(SubtitleImageBasedWriter.VALID_POSITION)))
+            raise ValueError(
+                'Unknown position. Supported: {}'.format(','.join(SubtitleImageBasedWriter.VALID_POSITION)))
 
         # group captions that have the same start time
         caps_start_time = self.group_captions_by_start_time(caption_list)
@@ -217,7 +212,6 @@ class SubtitleImageBasedWriter(BaseWriter):
         index = 1
 
         for i, cap_list in enumerate(caps_final):
-
             # Create RGBA image with transparent background
             img = Image.new('RGBA', (self.video_width, self.video_height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
@@ -233,7 +227,7 @@ class SubtitleImageBasedWriter(BaseWriter):
     def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom',
                   align: str = 'left'):
         ascender, descender = fnt.getmetrics()
-        line_spacing = ascender + abs(descender)  # Basic line height without extra padding
+        line_spacing = (ascender + abs(descender)) * 0.75  # Basic line height without extra padding
         lines_written = 0
         for caption in caption_list[::-1]:
             text = caption.get_text()
@@ -272,7 +266,8 @@ class SubtitleImageBasedWriter(BaseWriter):
             if position != 'source':
                 x = self.video_width / 2 - r / 2
                 if position == 'bottom':
-                    y = self.video_height - b - 10 - lines_written * line_spacing  # padding for readability
+                    # Place baseline at 5% from the bottom; descender runs below
+                    y = self.video_height * 0.92 - ascender - lines_written * line_spacing
                 elif position == 'top':
                     y = 10 + lines_written * line_spacing
                 else:
@@ -284,11 +279,11 @@ class SubtitleImageBasedWriter(BaseWriter):
             text_top = y - border_offset + t
             text_right = x + border_offset + r
             text_bottom = y + border_offset + b
-            if text_left < 0 or text_top < 0 or text_right > self.video_width or text_bottom > self.video_height:
+            if text_left < 0 or text_top < 0 or text_right > self.video_width or (
+                    position != 'bottom' and text_bottom > self.video_height):
                 raise CaptionRendererError(
                     f'Text runs off screen: text="{text}"'
                 )
-
 
             border = (*self.borderColor, 255)  # Add alpha for RGBA
             font = (*self.fontColor, 255)  # Add alpha for RGBA
