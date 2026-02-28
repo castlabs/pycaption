@@ -227,9 +227,22 @@ class SubtitleImageBasedWriter(BaseWriter):
     def printLine(self, draw: ImageDraw, caption_list: Caption, fnt: ImageFont, position: str = 'bottom',
                   align: str = 'left'):
         ascender, descender = fnt.getmetrics()
-        line_spacing = (ascender + abs(descender)) * 0.75  # Basic line height without extra padding
+        line_spacing = (ascender + abs(descender)) * 0.80  # Basic line height without extra padding
+
+        # Split captions containing \n into separate single-line captions
+        flat_captions = []
+        for caption in caption_list:
+            text = caption.get_text()
+            if '\n' in text:
+                for line in text.split('\n'):
+                    flat_captions.append(Caption(caption.start, caption.end,
+                                                 [CaptionNode.create_text(line)],
+                                                 layout_info=caption.layout_info))
+            else:
+                flat_captions.append(caption)
+
         lines_written = 0
-        for caption in caption_list[::-1]:
+        for caption in flat_captions[::-1]:
             text = caption.get_text()
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
 
@@ -266,7 +279,8 @@ class SubtitleImageBasedWriter(BaseWriter):
             if position != 'source':
                 x = self.video_width / 2 - r / 2
                 if position == 'bottom':
-                    # Place baseline at 5% from the bottom; descender runs below
+                    # Place baseline at 8% from the bottom; descender runs below
+                    # Additional lines grow upward from the same anchor
                     y = self.video_height * 0.92 - ascender - lines_written * line_spacing
                 elif position == 'top':
                     y = 10 + lines_written * line_spacing
