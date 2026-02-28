@@ -1,11 +1,14 @@
 
 import os
+from unittest import skip
 
 import pytest
 from PIL import Image, ImageDraw, ImageFont
 
+from pycaption import SRTReader
 from pycaption.base import Caption, CaptionNode
 from pycaption.exceptions import CaptionRendererError
+from pycaption.filtergraph import FiltergraphWriter
 from pycaption.geometry import Layout, Point, Size, UnitEnum
 from pycaption.subtitler_image_based import SubtitleImageBasedWriter
 
@@ -112,12 +115,20 @@ class TestBaselineAlignment:
 
     NO_DESCENDER = "AHLEN"       # no descenders
     WITH_DESCENDER = "gypsy"     # descenders: g, y, p
+    WITH_DESCENDER_TOP = "gypsy\nAHLEN"     # descenders: g, y, p
+    WITH_DESCENDER_BOTTOM = "AHLEN\ngypsy"     # descenders: g, y, p
+
 
     COMBOS = [
         ("no_desc_x2", [NO_DESCENDER, NO_DESCENDER]),
         ("desc_x2", [WITH_DESCENDER, WITH_DESCENDER]),
         ("top_no_bottom_yes", [NO_DESCENDER, WITH_DESCENDER]),
         ("top_yes_bottom_no", [WITH_DESCENDER, NO_DESCENDER]),
+        ("one_line-no", [NO_DESCENDER]),
+        ("one_line-yes", [WITH_DESCENDER]),
+        ("one_line-yes", [WITH_DESCENDER]),
+        ("two-in-one-a", [WITH_DESCENDER_TOP]),
+        ("tow-in-one-b", [WITH_DESCENDER_BOTTOM]),
     ]
 
     @pytest.fixture(params=COMBOS, ids=[c[0] for c in COMBOS])
@@ -140,5 +151,7 @@ class TestBaselineAlignment:
         guide.line([(0, baseline_y), (width, baseline_y)], fill=(255, 0, 0, 200), width=1)
 
         out = tmp_path / f"baseline_{name}.png"
+        out = f"tests/baseline_samples/baseline_{name}.png"
         img.save(str(out))
         print(f"\nSaved: {out}")
+
