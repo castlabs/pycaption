@@ -229,7 +229,8 @@ class SubtitleImageBasedWriter(BaseWriter):
         ascender, descender = fnt.getmetrics()
         line_spacing = (ascender + abs(descender)) * 0.80  # Basic line height without extra padding
 
-        # Split captions containing \n into separate single-line captions
+        # Split captions containing \n into separate single-line captions.
+        # Position is on the caption (not per-node); lines are stacked by the renderer.
         flat_captions = []
         for caption in caption_list:
             text = caption.get_text()
@@ -241,42 +242,43 @@ class SubtitleImageBasedWriter(BaseWriter):
             else:
                 flat_captions.append(caption)
 
-        lines_written = 0
-        for caption in flat_captions[::-1]:
+        # For source mode, resolve the block anchor from the first caption once,
+        # then stack lines downward. Fall back to bottom if position is unusable.
+        source_x = None
+        source_y = None
+        if position == 'source':
+            try:
+                first = flat_captions[0] if flat_captions else None
+                if first and first.layout_info:
+                    x_ = first.layout_info.origin.x
+                    y_ = first.layout_info.origin.y
+                    if isinstance(x_, Size) and isinstance(y_, Size) \
+                            and x_.unit == UnitEnum.PERCENT \
+                            and y_.unit == UnitEnum.PERCENT:
+                        source_x = self.video_width * (x_.value / 100)
+                        source_y = self.video_height * (y_.value / 100)
+                        if y_.value > 70:
+                            source_y -= 10
+            except Exception:
+                pass
+            if source_x is None:
+                position = 'bottom'
+
+        # Source mode: iterate top-to-bottom, stacking lines downward.
+        # Bottom/top modes: iterate bottom-to-top (reversed), stacking upward.
+        caption_iter = flat_captions if position == 'source' else flat_captions[::-1]
+
+        for lines_written, caption in enumerate(caption_iter):
             text = caption.get_text()
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
 
-            x = None
-            y = None
-
-            # if position is specified as source, get the layout info
-            # fall back to "bottom" position if we can't get it
             if position == 'source':
-                try:
-                    x_ = caption.layout_info.origin.x
-                    y_ = caption.layout_info.origin.y
-
-                    if isinstance(x_, Size) \
-                            and isinstance(y_, Size) \
-                            and x_.unit == UnitEnum.PERCENT \
-                            and y_.unit == UnitEnum.PERCENT:
-                        x = self.video_width * (x_.value / 100)
-                        y = self.video_height * (y_.value / 100)
-
-                        # make sure the text doesn't go out of the screen
-                        box_rightmost_edge = x + r
-                        if box_rightmost_edge > self.video_width:
-                            x = float(self.video_width) - float(r) - float(10)
-
-                        # padding for readability
-                        if y_.value > 70:
-                            y = y - 10
-                    else:
-                        position = 'bottom'
-                except:
-                    position = 'bottom'
-
-            if position != 'source':
+                x = source_x
+                # make sure the text doesn't go out of the screen
+                if x + r > self.video_width:
+                    x = float(self.video_width) - float(r) - float(10)
+                y = source_y + lines_written * line_spacing
+            else:
                 x = self.video_width / 2 - r / 2
                 if position == 'bottom':
                     # Place baseline at 8% from the bottom; descender runs below
