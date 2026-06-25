@@ -711,7 +711,8 @@ class Layout:
     """
 
     def __init__(self, origin=None, extent=None, padding=None, alignment=None,
-                 webvtt_positioning=None, inherit_from=None):
+                 webvtt_positioning=None, inherit_from=None,
+                 center_horizontal=False):
         """
         :type origin: Point
         :param origin: The point on the screen which is the top left vertex
@@ -730,8 +731,13 @@ class Layout:
         :type webvtt_positioning: str
         :param webvtt_positioning: A string with the raw WebVTT cue settings.
             This is used so that WebVTT positioning isn't lost on conversion
-            from WebVTT to WebVTT. It is needed only because pycaption
-            currently doesn't support reading positioning from WebVTT.
+            from WebVTT to WebVTT.
+
+        :type center_horizontal: bool
+        :param center_horizontal: When True, image-based writers should centre
+            the text horizontally rather than using origin.x as a left anchor.
+            Set by the WebVTT reader for cues that carry a ``line:XX%`` setting
+            but no explicit ``position:XX%``, matching default browser behaviour.
 
         :type inherit_from: Layout
         :param inherit_from: A Layout with the positioning parameters to be
@@ -743,6 +749,7 @@ class Layout:
         self.padding = padding
         self.alignment = alignment
         self.webvtt_positioning = webvtt_positioning
+        self.center_horizontal = center_horizontal
 
         if inherit_from:
             for attr_name in ['origin', 'extent', 'padding', 'alignment']:

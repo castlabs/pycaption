@@ -152,6 +152,7 @@ class TestBaselineAlignment:
 
         out = tmp_path / f"baseline_{name}.png"
         out = f"tests/baseline_samples/baseline_{name}.png"
+        os.makedirs("tests/baseline_samples", exist_ok=True)
         img.save(str(out))
         print(f"\nSaved: {out}")
 

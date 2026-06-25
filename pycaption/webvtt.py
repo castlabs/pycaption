@@ -10,7 +10,10 @@ from .exceptions import (
     CaptionReadSyntaxError,
     InvalidInputError,
 )
-from .geometry import HorizontalAlignmentEnum, Layout
+from .geometry import (
+    Alignment, HorizontalAlignmentEnum, Layout, Point, Size, UnitEnum,
+    VerticalAlignmentEnum,
+)
 
 # A WebVTT timing line has both start/end times and layout related settings
 # (referred to as 'cue settings' in the documentation)
@@ -148,9 +151,75 @@ class WebVTTReader(BaseReader):
 
         layout_info = None
         if cue_settings:
-            layout_info = Layout(webvtt_positioning=cue_settings)
+            layout_info = self._parse_cue_settings(cue_settings)
 
         return start, end, layout_info
+
+    def _parse_cue_settings(self, cue_settings):
+        """Parse WebVTT cue settings into a Layout with structured origin/alignment.
+
+        Populates origin.y from ``line:XX%`` and origin.x from ``position:XX%``
+        (defaulting to a 10% left margin when position is absent). Also maps
+        ``align`` to horizontal alignment. The raw string is kept in
+        webvtt_positioning so VTT→VTT round-trips are unaffected (the WebVTT
+        writer uses that field directly and never falls through to origin).
+        """
+        _h_align_map = {
+            'left': HorizontalAlignmentEnum.LEFT,
+            'center': HorizontalAlignmentEnum.CENTER,
+            'right': HorizontalAlignmentEnum.RIGHT,
+            'start': HorizontalAlignmentEnum.START,
+            'end': HorizontalAlignmentEnum.END,
+        }
+
+        origin_x = None
+        origin_y = None
+        h_align = None
+
+        for setting in cue_settings.split():
+            if ':' not in setting:
+                continue
+            key, _, value = setting.partition(':')
+
+            if key == 'line' and value.endswith('%'):
+                try:
+                    origin_y = Size(float(value[:-1]), UnitEnum.PERCENT)
+                except ValueError:
+                    pass
+            elif key == 'position' and value.endswith('%'):
+                try:
+                    origin_x = Size(float(value[:-1]), UnitEnum.PERCENT)
+                except ValueError:
+                    pass
+            elif key == 'align':
+                h_align = _h_align_map.get(value)
+
+        # When no explicit position:XX% is given, the browser default is to
+        # centre the cue box horizontally.  We signal this with center_horizontal
+        # so that image-based writers can replicate that behaviour instead of
+        # treating origin.x as a fixed left anchor.
+        center_horizontal = origin_y is not None and origin_x is None
+        origin = None
+        if origin_y is not None:
+            if origin_x is None:
+                origin_x = Size(0.0, UnitEnum.PERCENT)  # placeholder; renderer centres instead
+            origin = Point(origin_x, origin_y)
+
+        alignment = None
+        if h_align is not None:
+            v_align = (
+                VerticalAlignmentEnum.TOP
+                if (origin_y is not None and origin_y.value <= 50)
+                else VerticalAlignmentEnum.BOTTOM
+            )
+            alignment = Alignment(h_align, v_align)
+
+        return Layout(
+            origin=origin,
+            alignment=alignment,
+            webvtt_positioning=cue_settings,
+            center_horizontal=center_horizontal,
+        )
 
     def _parse_timestamp(self, timestamp):
         """Returns an integer representing a number of microseconds
