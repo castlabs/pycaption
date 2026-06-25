@@ -246,22 +246,25 @@ class SubtitleImageBasedWriter(BaseWriter):
         # then stack lines downward. Fall back to bottom if position is unusable.
         source_x = None
         source_y = None
+        source_center_x = False
         if position == 'source':
             try:
                 first = flat_captions[0] if flat_captions else None
                 if first and first.layout_info:
-                    x_ = first.layout_info.origin.x
                     y_ = first.layout_info.origin.y
-                    if isinstance(x_, Size) and isinstance(y_, Size) \
-                            and x_.unit == UnitEnum.PERCENT \
-                            and y_.unit == UnitEnum.PERCENT:
-                        source_x = self.video_width * (x_.value / 100)
+                    if isinstance(y_, Size) and y_.unit == UnitEnum.PERCENT:
                         source_y = self.video_height * (y_.value / 100)
                         if y_.value > 70:
                             source_y -= 10
+                        source_center_x = getattr(
+                            first.layout_info, 'center_horizontal', False)
+                        if not source_center_x:
+                            x_ = first.layout_info.origin.x
+                            if isinstance(x_, Size) and x_.unit == UnitEnum.PERCENT:
+                                source_x = self.video_width * (x_.value / 100)
             except Exception:
                 pass
-            if source_x is None:
+            if source_y is None or (not source_center_x and source_x is None):
                 position = 'bottom'
 
         # Source mode: iterate top-to-bottom, stacking lines downward.
@@ -273,10 +276,13 @@ class SubtitleImageBasedWriter(BaseWriter):
             l, t, r, b = draw.textbbox((0, 0), text, font=fnt, align=align)
 
             if position == 'source':
-                x = source_x
-                # make sure the text doesn't go out of the screen
-                if x + r > self.video_width:
-                    x = float(self.video_width) - float(r) - float(10)
+                if source_center_x:
+                    x = self.video_width / 2 - r / 2
+                else:
+                    x = source_x
+                    # make sure the text doesn't go out of the screen
+                    if x + r > self.video_width:
+                        x = float(self.video_width) - float(r) - float(10)
                 y = source_y + lines_written * line_spacing
             else:
                 x = self.video_width / 2 - r / 2

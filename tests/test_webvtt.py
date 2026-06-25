@@ -169,20 +169,20 @@ class TestWebVTTReader(ReaderTestingMixIn):
         assert cue.layout_info.origin.y.value == 20.0
         assert cue.layout_info.origin.y.unit == UnitEnum.PERCENT
 
-    def test_line_percent_defaults_origin_x_to_10_percent(self):
+    def test_line_percent_without_position_sets_center_horizontal(self):
         content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20%\nHello\n"
         captions = self.reader.read(content)
         cue = captions.get_captions('en-US')[0]
 
-        assert cue.layout_info.origin.x.value == 10.0
-        assert cue.layout_info.origin.x.unit == UnitEnum.PERCENT
+        assert cue.layout_info.center_horizontal is True
 
-    def test_position_percent_sets_origin_x(self):
+    def test_position_percent_sets_origin_x_and_disables_centering(self):
         content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20% position:30%\nHello\n"
         captions = self.reader.read(content)
         cue = captions.get_captions('en-US')[0]
 
         assert cue.layout_info.origin.x.value == 30.0
+        assert cue.layout_info.center_horizontal is False
 
     def test_align_sets_horizontal_alignment(self):
         content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20% align:center\nHello\n"

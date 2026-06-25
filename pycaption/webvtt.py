@@ -194,10 +194,15 @@ class WebVTTReader(BaseReader):
             elif key == 'align':
                 h_align = _h_align_map.get(value)
 
+        # When no explicit position:XX% is given, the browser default is to
+        # centre the cue box horizontally.  We signal this with center_horizontal
+        # so that image-based writers can replicate that behaviour instead of
+        # treating origin.x as a fixed left anchor.
+        center_horizontal = origin_y is not None and origin_x is None
         origin = None
         if origin_y is not None:
             if origin_x is None:
-                origin_x = Size(10.0, UnitEnum.PERCENT)
+                origin_x = Size(0.0, UnitEnum.PERCENT)  # placeholder; renderer centres instead
             origin = Point(origin_x, origin_y)
 
         alignment = None
@@ -209,7 +214,12 @@ class WebVTTReader(BaseReader):
             )
             alignment = Alignment(h_align, v_align)
 
-        return Layout(origin=origin, alignment=alignment, webvtt_positioning=cue_settings)
+        return Layout(
+            origin=origin,
+            alignment=alignment,
+            webvtt_positioning=cue_settings,
+            center_horizontal=center_horizontal,
+        )
 
     def _parse_timestamp(self, timestamp):
         """Returns an integer representing a number of microseconds
