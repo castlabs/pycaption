@@ -48,3 +48,9 @@ class CaptionRendererError(Exception):
     Error raised when caption content cannot be rendered correctly,
     e.g. text runs off screen or required glyphs are missing from the font.
     """
+
+
+class CaptionRendererErrorGroup(ExceptionGroup):
+    """
+    Exception group which contains multiple :class:`CaptionRenderError` instances.
+    """

@@ -10,7 +10,7 @@ from fontTools.ttLib import TTFont
 from langcodes import Language, tag_distance
 
 from pycaption.base import BaseWriter, CaptionSet, Caption, CaptionNode, CaptionList
-from pycaption.exceptions import CaptionRendererError
+from pycaption.exceptions import CaptionRendererError, CaptionRendererErrorGroup
 from pycaption.geometry import UnitEnum, Size
 
 
@@ -211,16 +211,25 @@ class SubtitleImageBasedWriter(BaseWriter):
         fnt = ImageFont.truetype(fnt, font_size)
         index = 1
 
+        # Try to render all images and collect all exceptions
+        image_exceptions = []
         for i, cap_list in enumerate(caps_final):
             # Create RGBA image with transparent background
             img = Image.new('RGBA', (self.video_width, self.video_height), (0, 0, 0, 0))
             draw = ImageDraw.Draw(img)
-            self.printLine(draw, cap_list, fnt, position, align)
+            try:
+                self.printLine(draw, cap_list, fnt, position, align)
+            except CaptionRendererError as e:
+                image_exceptions.append(e)
+                continue
 
             # Pass RGBA image to subclass - each subclass converts as needed
             self.save_image(tmpDir, index, img)
 
             index = index + 1
+
+        if len(image_exceptions) > 0:
+            raise CaptionRendererErrorGroup("Errors while rendering captions", image_exceptions)
 
         return caps_final, overlapping
 
@@ -298,7 +307,7 @@ class SubtitleImageBasedWriter(BaseWriter):
             if text_left < 0 or text_top < 0 or text_right > self.video_width or (
                     position != 'bottom' and text_bottom > self.video_height):
                 raise CaptionRendererError(
-                    f'Text runs off screen: text="{text}"'
+                    f'Text at {caption.format_start()} runs off screen: text="{text}"'
                 )
 
             border = (*self.borderColor, 255)  # Add alpha for RGBA
