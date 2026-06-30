@@ -47,7 +47,7 @@ class TestTextOffScreenCentered:
         writer, draw = make_writer_and_draw(200, 100)
         fnt = ImageFont.truetype(FONT_PATH, 20)
         caption = make_caption("This text is way too long to fit on a tiny screen")
-        with pytest.raises(CaptionRendererError, match="Text runs off screen"):
+        with pytest.raises(CaptionRendererError, match="Text at 00:00:00.000 runs off screen"):
             writer.printLine(draw, [caption], fnt, position='bottom', align='center')
 
 
@@ -62,7 +62,7 @@ class TestTextOffScreenLeft:
         writer, draw = make_writer_and_draw(200, 100)
         fnt = ImageFont.truetype(FONT_PATH, 20)
         caption = make_caption("This text is way too long to fit on a tiny screen")
-        with pytest.raises(CaptionRendererError, match="Text runs off screen"):
+        with pytest.raises(CaptionRendererError, match="Text at 00:00:00.000 runs off screen"):
             writer.printLine(draw, [caption], fnt, position='bottom', align='left')
 
 
@@ -77,7 +77,7 @@ class TestTextOffScreenRight:
         writer, draw = make_writer_and_draw(200, 100)
         fnt = ImageFont.truetype(FONT_PATH, 20)
         caption = make_caption("This text is way too long to fit on a tiny screen")
-        with pytest.raises(CaptionRendererError, match="Text runs off screen"):
+        with pytest.raises(CaptionRendererError, match="Text at 00:00:00.000 runs off screen"):
             writer.printLine(draw, [caption], fnt, position='bottom', align='right')
 
 
