@@ -4,6 +4,7 @@ from pycaption import (
     WebVTTReader, WebVTTWriter, SAMIReader, DFXPReader,
     CaptionReadNoCaptions, CaptionReadError, CaptionReadSyntaxError,
 )
+from pycaption.geometry import HorizontalAlignmentEnum, UnitEnum, VerticalAlignmentEnum
 from tests.mixins import ReaderTestingMixIn
 
 
@@ -157,6 +158,62 @@ class TestWebVTTReader(ReaderTestingMixIn):
     def test_webvtt_empty_cue(self, sample_webvtt_empty_cue):
         assert 1 == len(self.reader.read(
             sample_webvtt_empty_cue).get_captions('en-US'))
+
+    def test_line_percent_sets_origin_y(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20%\nHello\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info is not None
+        assert cue.layout_info.origin is not None
+        assert cue.layout_info.origin.y.value == 20.0
+        assert cue.layout_info.origin.y.unit == UnitEnum.PERCENT
+
+    def test_line_percent_without_position_sets_center_horizontal(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20%\nHello\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info.center_horizontal is True
+
+    def test_position_percent_sets_origin_x_and_disables_centering(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20% position:30%\nHello\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info.origin.x.value == 30.0
+        assert cue.layout_info.center_horizontal is False
+
+    def test_align_sets_horizontal_alignment(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20% align:center\nHello\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info.alignment is not None
+        assert cue.layout_info.alignment.horizontal == HorizontalAlignmentEnum.CENTER
+        assert cue.layout_info.alignment.vertical == VerticalAlignmentEnum.TOP
+
+    def test_webvtt_positioning_preserved_for_roundtrip(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20%\nHello\n\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info.webvtt_positioning == "line:20%"
+
+    def test_line_integer_does_not_set_origin(self):
+        # Integer line values (line count, not percent) must not populate origin
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:2\nHello\n"
+        captions = self.reader.read(content)
+        cue = captions.get_captions('en-US')[0]
+
+        assert cue.layout_info.origin is None
+
+    def test_webvtt_to_webvtt_roundtrip_preserves_line_setting(self):
+        content = "WEBVTT\n\n00:00:01.000 --> 00:00:03.000 line:20%\nHello\n\n"
+        caption_set = self.reader.read(content)
+        output = WebVTTWriter().write(caption_set)
+
+        assert "line:20%" in output
 
 
 class TestWebVTTWriter:
