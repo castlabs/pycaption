@@ -425,6 +425,23 @@ class CaptionSet:
                     out_captions.append(caption)
             self.set_captions(lang, out_captions)
 
+    def remove_styling(self):
+        """
+        Removes structured styling from all captions in all languages.
+
+        Unlike ``strip_html_tags`` (which only removes literal markup found
+        in TEXT node content), this removes styling that readers store
+        structurally: ``CaptionNode.STYLE`` nodes and the per-caption
+        ``style`` attribute. Writers generate style tags (e.g. ``<i>`` in
+        WebVTT) from these at write time, so this is what actually prevents
+        formats like SCC from producing styled output.
+        """
+        for lang in self.get_languages():
+            captions = self.get_captions(lang)
+            for caption in captions:
+                caption.style = {}
+                caption.nodes = [node for node in caption.nodes if node.type_ != CaptionNode.STYLE]
+
     def remove_layout_info(self):
         """
         Removes layout info from all captions and nodes in all languages.
