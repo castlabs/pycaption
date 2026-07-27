@@ -479,6 +479,11 @@ class WebVTTWriter(BaseWriter):
         # A properly encoded WebVTT string (plain unicode must be properly
         # escaped before being appended to this string)
         s = ""
+        # Whether the current line (since the last break) has any text content.
+        # A style node (e.g. an italics tag) does not count as text content, so
+        # a line like "<i>(Isla)</i>" still counts as having text and must not
+        # get a filler "&nbsp;".
+        line_has_text = False
         for i, node in enumerate(nodes):
             if node.type_ == CaptionNode.TEXT:
                 if s and current_layout and node.layout_info != current_layout:
@@ -490,6 +495,7 @@ class WebVTTWriter(BaseWriter):
                 # finally encoded as WebVTT.
                 s += self._encode_illegal_characters(node.content) or "&nbsp;"
                 current_layout = node.layout_info
+                line_has_text = True
             elif node.type_ == CaptionNode.STYLE:
                 resulting_style = self._calculate_resulting_style(
                     node.content, caption_set
@@ -510,11 +516,14 @@ class WebVTTWriter(BaseWriter):
                 # TODO: Refactor pycaption and eliminate the concept of a
                 # "Style node"
             elif node.type_ == CaptionNode.BREAK:
-                if i > 0 and nodes[i - 1].type_ != CaptionNode.TEXT:
-                    s += "&nbsp;"
-                if i == 0:  # cue text starts with a break
+                # A line with no actual text content (e.g. a leading break or
+                # two consecutive breaks) needs a filler "&nbsp;" so the empty
+                # line is preserved. Style tags on their own do not count as
+                # text content.
+                if not line_has_text:
                     s += "&nbsp;"
                 s += "\n"
+                line_has_text = False
 
         if s:
             layout_groups.append((s, current_layout))
