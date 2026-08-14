@@ -130,6 +130,51 @@ class TestTextOffScreenSourcePosition:
         assert isinstance(rg.value, CaptionRendererErrorGroup), "Should be wrapped in a CaptionRendererErrorGroup"
 
 
+class TestMultilineOrder:
+    """The first line of a multiline caption must be rendered above the
+    second line, regardless of whether the block is anchored top or bottom."""
+
+    NARROW = "II"
+    WIDE = "WWWWWWWWWW"
+
+    @staticmethod
+    def _text_bands(img):
+        """Return the width of each vertical band of rendered pixels,
+        top to bottom. Bands are separated by fully transparent rows."""
+        alpha = img.getchannel('A')
+        width, height = img.size
+        bands = []
+        current = None
+        for y in range(height):
+            row = [x for x in range(width) if alpha.getpixel((x, y)) > 0]
+            if row:
+                if current is None:
+                    current = [min(row), max(row)]
+                else:
+                    current[0] = min(current[0], min(row))
+                    current[1] = max(current[1], max(row))
+            elif current is not None:
+                bands.append(current[1] - current[0])
+                current = None
+        if current is not None:
+            bands.append(current[1] - current[0])
+        return bands
+
+    @pytest.mark.parametrize('position', ['top', 'bottom'])
+    def test_first_line_is_above_second(self, position):
+        writer, draw = make_writer_and_draw(720, 480)
+        fnt = ImageFont.truetype(FONT_PATH, 28)
+        caption = make_caption(f"{self.NARROW}\n{self.WIDE}")
+        writer.printLine(draw, [caption], fnt, position=position, align='center')
+
+        bands = self._text_bands(draw._image)
+        assert len(bands) == 2, "Expected two separate lines of text"
+        assert bands[0] < bands[1], (
+            f"position={position}: narrow first line must be rendered "
+            f"above the wide second line"
+        )
+
+
 class TestBaselineAlignment:
     """Render subtitle images with/without descenders to visually verify
     that the baseline sits at a consistent 5% from the bottom."""

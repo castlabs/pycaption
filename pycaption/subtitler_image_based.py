@@ -276,9 +276,9 @@ class SubtitleImageBasedWriter(BaseWriter):
             if source_y is None or (not source_center_x and source_x is None):
                 position = 'bottom'
 
-        # Source mode: iterate top-to-bottom, stacking lines downward.
-        # Bottom/top modes: iterate bottom-to-top (reversed), stacking upward.
-        caption_iter = flat_captions if position == 'source' else flat_captions[::-1]
+        # Bottom mode anchors the last line and stacks upward, so it needs the
+        # lines in reverse order. Top/source modes stack downward in source order.
+        caption_iter = flat_captions[::-1] if position == 'bottom' else flat_captions
 
         for lines_written, caption in enumerate(caption_iter):
             text = caption.get_text()
