@@ -158,6 +158,57 @@ class SubtitleImageBasedWriter(BaseWriter):
         distances.sort(key=lambda l: l[0])
         return distances
 
+    def timestamp_to_frame(self, value):
+        """Frame number a microsecond timestamp truncates to on output.
+
+        Mirrors the arithmetic used when writing timestamps, so that timings
+        compared here are the ones that actually end up in the output file.
+        """
+        if value < 0:
+            # only reached while searching for a free frame before a caption
+            return -1 + int(value // (1000000 / self.frame_rate))
+
+        return (int(value / 1000000) * int(self.frame_rate)
+                + int((int(value / 1000) % 1000) / int(1000 / self.frame_rate)))
+
+    def separate_adjacent_captions(self, caps_final):
+        """Make sure no caption starts before the previous one has ended.
+
+        Sources regularly overlap by a few frames, and timestamps that merely
+        differ by less than a frame collapse onto the same frame once written
+        out. Both cases are resolved by shortening the previous caption so the
+        current one keeps its start time; when that would leave the previous
+        caption with no visible duration, the current one is delayed instead.
+        """
+        frame = 1000000 / self.frame_rate
+
+        for i, caps_list in enumerate(caps_final):
+            if i == 0:
+                continue
+
+            prev_caps = caps_final[i - 1]
+            prev_start, prev_end = prev_caps[0].start, prev_caps[0].end
+            start, end = caps_list[0].start, caps_list[0].end
+
+            if self.timestamp_to_frame(start) > self.timestamp_to_frame(prev_end):
+                continue
+
+            new_prev_end = start - frame
+            while self.timestamp_to_frame(new_prev_end) >= self.timestamp_to_frame(start):
+                new_prev_end -= frame
+
+            if self.timestamp_to_frame(new_prev_end) > self.timestamp_to_frame(prev_start):
+                for c in prev_caps:
+                    c.end = new_prev_end
+                continue
+
+            new_start = prev_end + frame
+            while self.timestamp_to_frame(new_start) <= self.timestamp_to_frame(prev_end):
+                new_start += frame
+
+            for c in caps_list:
+                c.start = min(new_start, end)
+
     def write_images(
             self,
             caption_list: CaptionList,
@@ -182,17 +233,7 @@ class SubtitleImageBasedWriter(BaseWriter):
             raise ValueError('Unsupported subtitles - overlapping subtitles with different end times found')
 
         if avoid_same_next_start_prev_end:
-            min_diff = (1 / self.frame_rate) * 1000000
-            for i, caps_list in enumerate(caps_final):
-                if i == 0:
-                    continue
-
-                prev_end_time = caps_final[i - 1][0].end
-                current_start_time = caps_list[0].start
-
-                if (current_start_time == prev_end_time) or ((current_start_time - prev_end_time) < min_diff):
-                    for c in caps_list:
-                        c.start = min(c.start + min_diff, c.end)
+            self.separate_adjacent_captions(caps_final)
 
         distances = self.get_distances(lang, self.font_langs)
         if not distances:

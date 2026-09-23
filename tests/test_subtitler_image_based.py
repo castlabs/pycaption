@@ -222,3 +222,64 @@ class TestBaselineAlignment:
         img.save(str(out))
         print(f"\nSaved: {out}")
 
+
+
+def cap(start_s, end_s):
+    return Caption(int(start_s * 1000000), int(end_s * 1000000),
+                   [CaptionNode.create_text('x')])
+
+
+class TestSeparateAdjacentCaptions:
+    """``avoid_same_next_start_prev_end`` must guarantee that, on the output
+    frame grid, no caption starts before the previous one has ended."""
+
+    def separate(self, timings, frame_rate=25):
+        writer = SubtitleImageBasedWriter(frame_rate=frame_rate)
+        caps_final = [[cap(s, e)] for s, e in timings]
+        writer.separate_adjacent_captions(caps_final)
+        return writer, caps_final
+
+    def assert_no_overlap(self, writer, caps_final):
+        for prev, cur in zip(caps_final, caps_final[1:]):
+            assert writer.timestamp_to_frame(cur[0].start) > writer.timestamp_to_frame(prev[0].end)
+        for caps_list in caps_final:
+            assert writer.timestamp_to_frame(caps_list[0].end) > writer.timestamp_to_frame(caps_list[0].start)
+
+    def test_overlapping_source_shortens_previous_caption(self):
+        # taken from a real source: the first cue ends after the second starts
+        writer, caps_final = self.separate([(4.510, 6.300), (6.000, 8.090)])
+
+        self.assert_no_overlap(writer, caps_final)
+        # the second caption keeps its start time
+        assert caps_final[1][0].start == 6000000
+        assert writer.timestamp_to_frame(caps_final[0][0].end) == writer.timestamp_to_frame(6000000) - 1
+
+    def test_sub_frame_gap_is_widened(self):
+        # 8ms apart: both timestamps would truncate to the same frame
+        writer, caps_final = self.separate([(1.000, 2.000), (2.008, 3.000)])
+
+        self.assert_no_overlap(writer, caps_final)
+
+    def test_identical_timestamps_are_separated(self):
+        writer, caps_final = self.separate([(1.000, 2.000), (2.000, 3.000)])
+
+        self.assert_no_overlap(writer, caps_final)
+
+    def test_current_caption_is_delayed_when_previous_cannot_shrink(self):
+        # the previous caption is a single frame long, so it cannot be trimmed
+        writer, caps_final = self.separate([(1.000, 1.040), (1.000, 3.000)])
+
+        self.assert_no_overlap(writer, caps_final)
+        assert caps_final[0][0].end == 1040000
+        assert caps_final[1][0].start > 1040000
+
+    def test_non_overlapping_captions_are_untouched(self):
+        writer, caps_final = self.separate([(1.0, 2.0), (2.5, 3.0), (3.5, 4.0)])
+
+        assert [(c[0].start, c[0].end) for c in caps_final] == [
+            (1000000, 2000000), (2500000, 3000000), (3500000, 4000000)]
+
+    def test_cascading_overlaps(self):
+        writer, caps_final = self.separate([(1.0, 5.0), (2.0, 6.0), (3.0, 7.0)])
+
+        self.assert_no_overlap(writer, caps_final)
