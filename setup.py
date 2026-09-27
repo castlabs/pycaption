@@ -12,8 +12,8 @@ dependencies = [
     "beautifulsoup4>=4.12.1",
     "lxml>=4.9.1",
     "cssutils>=2.0.0",
-    "Pillow~=12.1.0",
-    "fonttools~=4.56.0",
+    "Pillow>=12.3.0,<13",
+    "fonttools>=4.60.2,<5",
     "langcodes~=3.5.0",
     "striprtf~=0.0.28"
 ]
@@ -24,7 +24,7 @@ transcript_dependencies = ["nltk==3.8.0"]
 
 setup(
     name="pycaption",
-    version="2.2.15",
+    version="2.2.16",
     description="Closed caption converter",
     long_description=open(README_PATH).read(),
     author="Joe Norton",
