@@ -64,6 +64,9 @@ class PLSTTReader(BaseReader):
             raise InvalidInputError("The content is not a unicode string.")
         if content.startswith(u'{\\rtf1'):
             content = striprtf.rtf_to_text(content)
+        # The cue split below anchors on "\n"; a Windows (CRLF) file would
+        # otherwise parse as a single cue whose first line is "[1]".
+        content = content.replace("\r\n", "\n").replace("\r", "\n")
 
         try:
             header = self._get_header(content)
