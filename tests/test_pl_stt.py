@@ -51,3 +51,11 @@ class TestPLSTTReader(ReaderTestingMixIn):
     def test_bad_header_1(self):
         with pytest.raises(InvalidInputError):
             self.reader.read(SAMPLE_PL_STT_BAD_HEADER_1)
+
+    def test_crlf_line_endings(self):
+        captions = self.reader.read(SAMPLE_PL_STT.replace("\n", "\r\n"))
+        cues = captions.get_captions("en-US")
+        assert len(cues) == 5
+        assert cues[2].start == 65000000
+        assert cues[2].end == 66500000
+        assert cues[2].nodes[0].content == "Third caption"
